@@ -1,0 +1,437 @@
+{
+ "categories": {
+  "clothes": "لباس",
+  "food": "خوراکی",
+  "head": "سر",
+  "room": "اتاق"
+ },
+ "cut": [
+  {
+   "fa": "قفسه‌ی کتاب",
+   "id": "bookshelf",
+   "reason": "اتاق جدید از اول یک قفسه‌ی ثابت دارد (DESIGN.md §3)؛ قفسه‌ی دوم با چیدمان قفل‌شده برخورد می‌کند و تکراری است",
+   "was_price": 80
+  },
+  {
+   "fa": "گلدان",
+   "id": "plant",
+   "reason": "گلدان از اول روی قفسه‌ی اتاق هست (DESIGN.md §3)؛ خریدنش تکراری است — گلدان حالا یکی از ۱۲ پراپ اتاق است، نه آیتم فروشگاه",
+   "was_price": 60
+  },
+  {
+   "fa": "اتاق شب",
+   "id": "roomNight",
+   "reason": "با پالت شبِ حالت خواب (DESIGN.md §10) در تضاد است؛ شب باید فقط وقتی او می‌خوابد بیاید، نه به‌عنوان تم دائمی",
+   "was_price": 180
+  }
+ ],
+ "economy": {
+  "day1_affordable": [
+   "starclip",
+   "bowtie",
+   "candy",
+   "ribbonBlue",
+   "cookie",
+   "beanie",
+   "tea",
+   "glasses",
+   "milk"
+  ],
+  "locked_showcase": {
+   "id": "crown",
+   "level": 4,
+   "price": 120
+  },
+  "start_coins": 20
+ },
+ "items": [
+  {
+   "art": "starclip.png",
+   "art_source": "redrawn",
+   "category": "head",
+   "effect": "دو گیره‌ی ستاره روی موها می‌نشیند",
+   "fa": "گیره‌ی ستاره آبی و صورتی",
+   "id": "starclip",
+   "level": 1,
+   "price": 5,
+   "slot": "head"
+  },
+  {
+   "art": "bowtie.png",
+   "art_source": "reused",
+   "category": "clothes",
+   "effect": "پاپیون آبی دور گردن",
+   "fa": "پاپیون آبی",
+   "id": "bowtie",
+   "level": 1,
+   "price": 8,
+   "slot": "neck"
+  },
+  {
+   "art": "candy.png",
+   "art_source": "redrawn",
+   "category": "food",
+   "consumable": true,
+   "effect": "خوراکی: گرسنگی +6، شادی +8، انرژی +2",
+   "fa": "آبنبات ستاره‌ای",
+   "id": "candy",
+   "invKey": "candy",
+   "level": 1,
+   "price": 10,
+   "slot": null
+  },
+  {
+   "art": "ribbon-blue.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "روبان آبی دور گیس‌ها",
+   "fa": "روبان آبی گیس",
+   "id": "ribbonBlue",
+   "level": 1,
+   "price": 12,
+   "slot": "braid"
+  },
+  {
+   "art": "starcookie.png",
+   "art_source": "reused",
+   "category": "food",
+   "consumable": true,
+   "effect": "خوراکی: گرسنگی +10، شادی +12",
+   "fa": "کوکی ستاره‌ای",
+   "id": "cookie",
+   "invKey": "cookie",
+   "level": 1,
+   "price": 12,
+   "slot": null
+  },
+  {
+   "art": "beanie.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "کلاه بافتنی روی سر",
+   "fa": "کلاه بافتنی صورتی",
+   "id": "beanie",
+   "level": 1,
+   "price": 15,
+   "slot": "head"
+  },
+  {
+   "art": "tea.png",
+   "art_source": "reused",
+   "category": "food",
+   "consumable": true,
+   "effect": "خوراکی: گرسنگی +8، شادی +8، انرژی +10",
+   "fa": "چای حبابی",
+   "id": "tea",
+   "invKey": "tea",
+   "level": 1,
+   "price": 15,
+   "slot": null
+  },
+  {
+   "art": "glasses.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "عینک گرد روی چشم‌ها",
+   "fa": "عینک گرد",
+   "id": "glasses",
+   "level": 1,
+   "price": 18,
+   "slot": "head"
+  },
+  {
+   "art": "milk.png",
+   "art_source": "reused",
+   "category": "food",
+   "consumable": true,
+   "effect": "خوراکی: گرسنگی +10، شادی +10، انرژی +5",
+   "fa": "شیر توت‌فرنگی",
+   "id": "milk",
+   "invKey": "milk",
+   "level": 1,
+   "price": 18,
+   "slot": null
+  },
+  {
+   "art": "sleepmask.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "چشم‌بند صورتی برای خواب",
+   "fa": "چشم‌بند خواب",
+   "id": "sleepmask",
+   "level": 2,
+   "price": 20,
+   "slot": "head"
+  },
+  {
+   "art": "pudding.png",
+   "art_source": "reused",
+   "category": "food",
+   "consumable": true,
+   "effect": "خوراکی: گرسنگی +14، شادی +10، انرژی +4",
+   "fa": "پودینگ",
+   "id": "pudding",
+   "invKey": "pudding",
+   "level": 1,
+   "price": 22,
+   "slot": null
+  },
+  {
+   "art": "starties.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "گیره‌های ستاره‌ی کوچک روی گیس‌ها",
+   "fa": "گیره‌های ستاره‌ای گیس",
+   "id": "starties",
+   "level": 2,
+   "price": 15,
+   "slot": "braid"
+  },
+  {
+   "art": "bow.png",
+   "art_source": "redrawn",
+   "category": "head",
+   "effect": "پاپیون صورتی روی گیس‌ها",
+   "fa": "پاپیون صورتی گیس",
+   "id": "bow",
+   "level": 2,
+   "price": 25,
+   "slot": "braid"
+  },
+  {
+   "art": "scarf.png",
+   "art_source": "redrawn",
+   "category": "clothes",
+   "effect": "شال بافتنی صورتی دور گردن",
+   "fa": "شال صورتی",
+   "id": "scarf",
+   "level": 2,
+   "price": 25,
+   "slot": "neck"
+  },
+  {
+   "art": "cake.png",
+   "art_source": "reused",
+   "category": "food",
+   "consumable": true,
+   "effect": "خوراکی: گرسنگی +10، شادی +15",
+   "fa": "کیک",
+   "id": "cake",
+   "invKey": "cake",
+   "level": 1,
+   "price": 30,
+   "slot": null
+  },
+  {
+   "art": "apron.png",
+   "art_source": "redrawn",
+   "category": "clothes",
+   "effect": "پیش‌بند صورتی روی لباس",
+   "fa": "پیش‌بند",
+   "id": "apron",
+   "level": 2,
+   "price": 30,
+   "slot": "outfit"
+  },
+  {
+   "art": "flowercrown.png",
+   "art_source": "redrawn",
+   "category": "head",
+   "effect": "تاج گل روی سر",
+   "fa": "تاج گل",
+   "id": "flowercrown",
+   "level": 2,
+   "price": 30,
+   "slot": "head"
+  },
+  {
+   "art": "ball.png",
+   "art_source": "reused",
+   "category": "room",
+   "effect": "اسباب‌بازی: توپ روی قالیچه می‌آید",
+   "fa": "توپ بازی",
+   "id": "ball",
+   "level": 2,
+   "price": 25,
+   "slot": null,
+   "toy": true
+  },
+  {
+   "art": "plush.png",
+   "art_source": "redrawn",
+   "category": "room",
+   "effect": "اسباب‌بازی: عروسک خرگوشی روی قالیچه می‌آید",
+   "fa": "عروسک خرگوشی",
+   "id": "plush",
+   "level": 3,
+   "price": 35,
+   "slot": null,
+   "toy": true
+  },
+  {
+   "art": "sailor.png",
+   "art_source": "reused",
+   "category": "clothes",
+   "effect": "یقه‌ی ملوانی روی هودی",
+   "fa": "یقه‌ی ملوانی",
+   "id": "sailor",
+   "level": 3,
+   "price": 35,
+   "slot": "outfit"
+  },
+  {
+   "art": "catears.png",
+   "art_source": "redrawn",
+   "category": "head",
+   "effect": "گوش گربه‌ای صورتی روی سر",
+   "fa": "گوش گربه‌ای",
+   "id": "catears",
+   "level": 2,
+   "price": 40,
+   "slot": "head"
+  },
+  {
+   "art": "bunnyears.png",
+   "art_source": "redrawn",
+   "category": "head",
+   "effect": "گوش خرگوشی روی سر",
+   "fa": "گوش خرگوشی",
+   "id": "bunnyears",
+   "level": 2,
+   "price": 40,
+   "slot": "head"
+  },
+  {
+   "art": "fairylights.png",
+   "art_source": "redrawn",
+   "category": "room",
+   "effect": "دکور: ریسه‌ی چراغ روی دیوار اتاق",
+   "fa": "چراغ‌های ریسه‌ای",
+   "id": "fairylights",
+   "level": 3,
+   "price": 40,
+   "slot": "decor"
+  },
+  {
+   "art": "bell.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "زنگوله‌ی طلایی روی گیس‌ها",
+   "fa": "زنگوله‌ی گیس",
+   "id": "bell",
+   "level": 3,
+   "price": 45,
+   "slot": "braid"
+  },
+  {
+   "art": "necklace-pearl.png",
+   "art_source": "redrawn",
+   "category": "clothes",
+   "effect": "گردنبند مروارید با آویز ستاره",
+   "fa": "گردنبند مروارید",
+   "id": "necklacePearl",
+   "level": 3,
+   "price": 50,
+   "slot": "neck"
+  },
+  {
+   "art": "wand.png",
+   "art_source": "reused",
+   "category": "room",
+   "effect": "اسباب‌بازی: چوبدستی ستاره‌ای برای تکان‌دادن",
+   "fa": "چوبدستی ستاره‌ای",
+   "id": "wand",
+   "level": 3,
+   "price": 50,
+   "slot": null,
+   "toy": true
+  },
+  {
+   "art": "necklace-gold.png",
+   "art_source": "reused",
+   "category": "clothes",
+   "effect": "گردنبند طلایی با آویز ستاره",
+   "fa": "گردنبند طلایی ستاره",
+   "id": "necklaceGold",
+   "level": 3,
+   "price": 60,
+   "slot": "neck"
+  },
+  {
+   "art": "vest.png",
+   "art_source": "redrawn",
+   "category": "clothes",
+   "effect": "جلیقه‌ی ستاره‌ای روی هودی",
+   "fa": "جلیقه‌ی ستاره‌ای",
+   "id": "vest",
+   "level": 4,
+   "price": 70,
+   "slot": "outfit"
+  },
+  {
+   "art": "room-pink.png",
+   "art_source": "reused",
+   "category": "room",
+   "effect": "تم اتاق: دیوار صورتی",
+   "fa": "اتاق صورتی",
+   "id": "roomPink",
+   "level": 3,
+   "price": 80,
+   "slot": "room"
+  },
+  {
+   "art": "room-mint.png",
+   "art_source": "reused",
+   "category": "room",
+   "effect": "تم اتاق: دیوار نعنایی",
+   "fa": "اتاق نعنایی",
+   "id": "roomMint",
+   "level": 3,
+   "price": 80,
+   "slot": "room"
+  },
+  {
+   "art": "cape.png",
+   "art_source": "reused",
+   "category": "clothes",
+   "effect": "شنل صورتی پشت سر",
+   "fa": "شنل صورتی",
+   "id": "cape",
+   "level": 4,
+   "price": 90,
+   "slot": "outfit"
+  },
+  {
+   "art": "room-lavender.png",
+   "art_source": "reused",
+   "category": "room",
+   "effect": "تم اتاق: دیوار یاسی",
+   "fa": "اتاق یاسی",
+   "id": "roomLavender",
+   "level": 4,
+   "price": 100,
+   "slot": "room"
+  },
+  {
+   "art": "crown.png",
+   "art_source": "reused",
+   "category": "head",
+   "effect": "تاج طلایی روی سر — جایزه‌ی سطح ۴",
+   "fa": "تاج طلایی",
+   "id": "crown",
+   "level": 4,
+   "price": 120,
+   "slot": "head"
+  }
+ ],
+ "notes": [
+  "نام bowtie از «پاپیون گردن» به «پاپیون آبی» برگشت تا با آرت آبی‌اش بخواند (DESIGN.md §9a).",
+  "scarf در کاتالوگ قدیمی آیکون اشتباه داشت (drink.png) و bow آیکون اشتباه داشت (heart.png)؛ هر دو از صفر کشیده شدند.",
+  "plush در فروشگاه همان عروسک تمام‌قد پراپ اتاق است (plush-bunny.png)، نه آیکونِ فقط-صورتِ قدیمی.",
+  "قیمت‌ها نسبت به کاتالوگ قدیمی پایین آمده‌اند تا اقتصاد روز اول DESIGN.md §9a برقرار باشد (۵ آیتم ارزان روز اول: starclip 5، bowtie 8، candy 10، beanie 15، glasses 18)؛ ۹ آیتم در مجموع با ۲۰ سکه‌ی شروع قابل‌خریدند.",
+  "آیتم‌های خوراکی اعدادشان را از جدول FOOD در game.js گرفته‌اند (cake 10/15 و غیره).",
+  "vest از صفر کشیده شد (قبلاً دو پنل صورتی/زرد بود و شبیه جلیقه خوانده نمی‌شد)؛ بند شانه، یقه‌ی V نعنایی، دکمه‌های طلایی، ستاره و جیب دارد."
+ ],
+ "source": "old catalogue: pixel-char/game.js SHOP (36 items) re-priced to the DESIGN.md §9a day-1 economy; art: 10 redrawn from scratch, 23 reused from the 59-icon set (verbatim copies in assets/items/)",
+ "version": 1
+}
