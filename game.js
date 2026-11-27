@@ -518,6 +518,7 @@
     bumpCare();
     save(); render();
     if (window.Rig) window.Rig.pet();
+    heartsFx(); // MERGE 2026-11-28 (pre-walk character): her pet had hearts
     sayBubble(L('pet', {}));
     checkQuests(); checkAchievements();
   }
@@ -1069,26 +1070,24 @@
 
   // ---------- room props ----------
   // NEW BRIEF 2026-11-27 — she STANDS in her place, never walks anywhere.
-  // A shelf tap is an in-place reaction ONLY: she glances left toward the
-  // shelf (the front-idle-glance sprite, eyes/head toward the shelf for
-  // ~0.9s via Rig.triggerGlance() — zero translation, charX stays HOME_X)
-  // and a bubble line. No book falls, no walk, no bend, no carry, no
-  // put-back, no upset-after-fetch. The old choreography is DELETED here
+  // A shelf tap is an in-place reaction ONLY: a bubble line, nothing
+  // else. No glance (the pre-walk character never turned her head to
+  // the shelf), no book falls, no walk, no bend, no carry, no put-back,
+  // no upset-after-fetch. The old choreography is DELETED here
   // (animateFallingBook + the walkTo/bendPickup/putBackBook/upsetPose
   // chain); the Rig functions themselves stay defined in rig.js as dead
-  // code, unexported. The glance used to be the mesh lookPose(-15, 2.0),
-  // but that sets an anim, which nulls the sprite path and yanks the
-  // render into the soft mesh art for 2s (a visible art-style pop) —
-  // the sprite glance stays in the pixel path. state.shelfBusy /
+  // code, unexported. state.shelfBusy /
   // shelfLastUpset stay in defaultState only for save-compat with older
   // saves; nothing reads or writes them any more. The shelfUpset /
   // pickUp / walking pools in lines.js are now unused by this file.
   var shelfLastAt = 0;
   function shelfSequence() {
     if (window.Rig && window.Rig.isBusy()) return;
-    if (Date.now() - shelfLastAt < 1500) return; // don't spam the glance
+    if (Date.now() - shelfLastAt < 1500) return; // don't spam the line
     shelfLastAt = Date.now();
-    if (window.Rig && window.Rig.triggerGlance) window.Rig.triggerGlance(); // sprite glance left at shelf, ~0.9s
+    // MERGE 2026-11-28 (pre-walk character): no glance. The pre-walk
+    // character never turned her head to the shelf — a shelf tap is a
+    // bubble line only. (Rig.triggerGlance is removed.)
     sayBubble('قفسه‌ی کتابامه! دست نزن بهشون!');
   }
   function heartsFx() {

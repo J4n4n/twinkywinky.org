@@ -55,9 +55,10 @@
     };
   }
   var rng = mulberry32(20261127);
-  // Precomputed deterministic blink schedule: cycle lengths 2.1–3.9s.
+  // Precomputed deterministic blink schedule: cycle lengths 2.8–5.0s.
+  // (pre-walk character, pixel-char Nov 26: blink 130ms every ~2.8-5s).
   var BLINK_CYCLES = [];
-  (function () { for (var i = 0; i < 64; i++) BLINK_CYCLES.push(2.1 + rng() * 1.8); })();
+  (function () { for (var i = 0; i < 64; i++) BLINK_CYCLES.push(2.8 + rng() * 2.2); })();
   var FIDGET_KINDS = [];
   (function () { for (var i = 0; i < 32; i++) FIDGET_KINDS.push(Math.floor(rng() * 3)); })();
   // Precomputed deterministic tilt schedule (round 7 idle wiring): cycle
@@ -143,10 +144,11 @@
   // 'front-' prefix keeps the two sets apart.
   // Round-7 fix: upset-f-* removed — the upset pose is dead code under the
   // new in-place brief, and loading the files only produced console 404s.
-  var FRONT_FILES = ['front-idle-0', 'front-idle-1', 'front-idle-2',
-                     'front-idle-closed', 'front-idle-tilt',
-                     'front-idle-glance',
-                     'front-sit-0', 'front-sit-1', 'front-sit-closed'];
+  // MERGE 2026-11-28 (pre-walk character): the home idle is the mesh, so
+  // the front-idle-* sprites are no longer loaded (the PNG files stay in
+  // the repo, undeleted). Only the sit sprites load — the rug sit is
+  // still sprite-based (frontSitSprite).
+  var FRONT_FILES = ['front-sit-0', 'front-sit-1', 'front-sit-closed'];
   var SPR = {};
   var readyPromise = null;
 
@@ -207,66 +209,20 @@
     return null;
   }
 
-  // Shelf-glance trigger (round 7): game.js shelfSequence() calls
-  // Rig.triggerGlance() on a shelf click; frontIdleSprite shows
-  // front-idle-glance for 0.9s. It is a deliberate user action, so it
-  // shows even under reducedMotion. The old mesh lookPose(-15, 2.0) is
-  // NOT used here any more: it sets an anim, which nulls the sprite
-  // path and yanks the render into the soft mesh art for 2s (a visible
-  // art-style pop) — the sprite glance stays in the pixel path.
-  var glanceUntil = 0;
-  function triggerGlance() { glanceUntil = Date.now() + 900; }
+  // MERGE 2026-11-28 (pre-walk character): the round-7 shelf glance is
+  // REMOVED. The pre-walk character never turned her head to the shelf;
+  // a shelf tap is a bubble line only (game.js shelfSequence). The
+  // triggerGlance export, the glanceUntil state and the front-idle-glance
+  // sprite branch are all gone; the sprite PNG stays in the repo.
 
-  // Front-idle sprite selection (rebuild round 7). Returns the
-  // front-idle sprite Image for the HOME IDLE only — mode 'front' with no
-  // anim, no holdPose and no walkState — or null to fall back to the mesh
-  // renderFront. The sprite is drawn UNDEFORMED (base transform only).
-  // Priority: glance > blink > tilt > breath. reducedMotion collapses
-  // the ambient motion (breath, tilt) to front-idle-0; blink still
-  // shows, and the on-demand glance still shows.
-  //   Blink: the deterministic BLINK_CYCLES schedule (closed for 0.15s
-  //     at the start of each 2.1-3.9s cycle).
-  //   Tilt: front-idle-tilt for 1.0s every 8-12s (seeded TILT_CYCLES);
-  //     the body is breath-0 in this frame.
-  //   Breath: 3.0s loop, signed sine b(t) = sin(2*pi*t/3.0) — the same
-  //     PERIOD as the mesh idlePose breath, so sprite/mesh stay in sync
-  //     (the phase differs: the mesh breathes low at bt 1.05-1.85, the
-  //     sprite shows its LOW frame at 1.75-2.75; they never render at
-  //     the same time, so no visible conflict). HIGH (front-idle-1,
-  //     inhale) while b >= +0.5, LOW (front-idle-2, exhale) while
-  //     b <= -0.5, else rest (front-idle-0).
-  //   NOTE (breaking change vs rounds 3/5/6): front-idle-1 is now the
-  //     HIGH/inhale frame and front-idle-2 the new LOW frame — the old
-  //     `breath >= 0.5 ? 'front-idle-1' : 'front-idle-0'` mapping is
-  //     WRONG and must never come back: it would show the inhale where
-  //     the exhale belongs.
-  // Anything that changes the pose beyond idle breathing/blinking falls
-  // back to the mesh: sitting, dancing, an active faceOverride, the
-  // excited state, a carried book, or any equipped shop item (the mesh
-  // draws those on the body; the sprite has none of them).
+  // MERGE 2026-11-28 (pre-walk character): the home idle is the MESH
+  // (renderFront + the pre-walk idlePose below), NOT a sprite. The
+  // front-idle sprites were the round-7 breath/tilt/glance frames — the
+  // breath moved the whole body, which the pre-walk character never did.
+  // This function now always returns null so frame() falls through to
+  // the mesh. The sit sprites (frontSitSprite) are untouched.
   function frontIdleSprite(t) {
-    if (mode !== 'front' || anim || holdPose || walkState) return null;
-    if (sitting || dancing || carriedBook) return null;
-    if (gear.head || gear.neck || gear.braid || gear.outfit) return null;
-    if (faceOverride) {
-      if (Date.now() < faceOverride.until) return null;
-      faceOverride = null;
-    }
-    if (Date.now() < excitedUntil) return null;
-    if (glanceUntil && Date.now() < glanceUntil) return SPR['front-idle-glance'] || null;
-    var idx = 0, acc = 0;
-    while (acc + BLINK_CYCLES[idx % BLINK_CYCLES.length] < t) { acc += BLINK_CYCLES[idx % BLINK_CYCLES.length]; idx++; }
-    if (t - acc < 0.15) return SPR['front-idle-closed'] || null;
-    if (!reducedMotion) {
-      var tidx = 0, tacc = 0;
-      while (tacc + TILT_CYCLES[tidx % TILT_CYCLES.length] < t) { tacc += TILT_CYCLES[tidx % TILT_CYCLES.length]; tidx++; }
-      if (t - tacc < 1.0) return SPR['front-idle-tilt'] || null;
-    }
-    if (reducedMotion) return SPR['front-idle-0'] || null;
-    var b = Math.sin(2 * Math.PI * (t % 3.0) / 3.0);
-    if (b >= 0.5) return SPR['front-idle-1'] || null;
-    if (b <= -0.5) return SPR['front-idle-2'] || null;
-    return SPR['front-idle-0'] || null;
+    return null;
   }
 
   // Front-sit sprite selection (rebuild round 4, face composite +
@@ -303,7 +259,7 @@
     if (Date.now() < excitedUntil) return null;
     var idx = 0, acc = 0;
     while (acc + BLINK_CYCLES[idx % BLINK_CYCLES.length] < t) { acc += BLINK_CYCLES[idx % BLINK_CYCLES.length]; idx++; }
-    if (t - acc < 0.15) return SPR['front-sit-closed'] || null;
+    if (t - acc < 0.13) return SPR['front-sit-closed'] || null;
     var bt = t % 3.0, breath;
     if (bt < 0.8) breath = 0;
     else if (bt < 1.05) breath = (bt - 0.8) / 0.25;
@@ -396,10 +352,10 @@
   var lastRender = { mode: 'front', charX: HOME_X, face: 'head' };
 
   // Pose patch: { ang:{bone:deg}, rootDx, rootDy, hipsDy, chestSY, face, handL, handR,
-  //   swapArms, scaleX, scaleY, braidA, headDy }
+  //   swapArms, scaleX, scaleY, braidA, headDy, headDx }
   function basePose() {
     return { ang: {}, rootDx: 0, rootDy: 0, hipsDy: 0, chestSY: 1, face: 'head',
-      handL: 'open', handR: 'open', swapArms: false, scaleX: 1, scaleY: 1, braidA: 0, headDy: 0 };
+      handL: 'open', handR: 'open', swapArms: false, scaleX: 1, scaleY: 1, braidA: 0, headDy: 0, headDx: 0 };
   }
 
   // ---------------- keyframe helpers ----------------
@@ -635,56 +591,59 @@
     }
   }
 
+  // Head spring (pre-walk character, pixel-char Nov 26): the head is a
+  // spring-damped pendulum around the neck pivot (k=180, c=15, slightly
+  // underdamped; angle clamp ±0.10 rad, dx ±14, dy -10..12 composite px).
+  // At rest it sits at 0; pet() impulses it so the head wobbles and
+  // settles. Integrated in frame(); applied to the pose's head (ang.head
+  // in deg, headDx/headDy in composite px) on top of the idle sway.
+  var headSpring = { angle: 0, angVel: 0, dx: 0, dxVel: 0, dy: 0, dyVel: 0 };
+  var headSpringLast = 0;
+  function stepHeadSpring(now) {
+    var dt = headSpringLast ? Math.min(0.05, (now - headSpringLast) / 1000) : 0.016;
+    headSpringLast = now;
+    var k = 180, c = 15;
+    headSpring.angVel += (-k * headSpring.angle - c * headSpring.angVel) * dt;
+    headSpring.angle += headSpring.angVel * dt;
+    headSpring.dxVel += (-k * headSpring.dx - c * headSpring.dxVel) * dt;
+    headSpring.dx += headSpring.dxVel * dt;
+    headSpring.dyVel += (-k * headSpring.dy - c * headSpring.dyVel) * dt;
+    headSpring.dy += headSpring.dyVel * dt;
+    headSpring.angle = Math.max(-0.10, Math.min(0.10, headSpring.angle));
+    headSpring.dx = Math.max(-14, Math.min(14, headSpring.dx));
+    headSpring.dy = Math.max(-10, Math.min(12, headSpring.dy));
+  }
+  function headSpringActive() {
+    return Math.abs(headSpring.angle) > 0.0005 || Math.abs(headSpring.angVel) > 0.001 ||
+           Math.abs(headSpring.dx) > 0.05 || Math.abs(headSpring.dxVel) > 0.1 ||
+           Math.abs(headSpring.dy) > 0.05 || Math.abs(headSpring.dyVel) > 0.1;
+  }
+
   // ---------------- idle (front, procedural, deterministic) ----------------
+  // MERGE 2026-11-28 (pre-walk character, pixel-char Nov 26 22:32): the
+  // home idle is HEAD-ONLY. The pre-walk character never breathed, never
+  // shifted its weight, never fidgeted, never tucked its hair — the body
+  // is still and only the head moves: a tiny whole-character bob, a
+  // ±0.012 rad head sway, and a blink. Breath / weight-shift / fidgets /
+  // braid-lag / torso-sway are REMOVED here (they moved the body). The
+  // head spring is applied in frame(), on top of this pose. The sitting
+  // and dancing branches below are the round-7 mesh fallbacks and stay.
   function idlePose(t) {
     var p = basePose();
     if (sleeping) return p;
-    // Breath 3.0s loop: rest 800ms -> fall 250 -> low 800 -> rise 250 -> rest ~900.
-    var bt = (t % 3.0);
-    var breath; // 0 rest, 1 low
-    if (bt < 0.8) breath = 0;
-    else if (bt < 1.05) breath = (bt - 0.8) / 0.25;
-    else if (bt < 1.85) breath = 1;
-    else if (bt < 2.1) breath = 1 - (bt - 1.85) / 0.25;
-    else breath = 0;
     var amp = reducedMotion ? 0 : 1;
-    p.hipsDy = breath * 6 * amp;                 // torso +3px screen ~ 15 composite; hips carry part
-    p.chestSY = 1 + breath * 0.015 * amp;
-    p.headDy = breath * 4 * amp;
-    // Blink: deterministic cycle schedule.
-    var cyc = 0, idx = 0, acc = 0;
+    // Pre-walk bob: whole-character translate only, never stretch.
+    // bobPhase advances 1.4/s; amp 3 (excited 5), composite px.
+    var bobAmp = (Date.now() < excitedUntil) ? 5 : 3;
+    p.rootDy = Math.sin(t * 1.4) * bobAmp * amp;
+    // Pre-walk head sway: ±0.012 rad = ±0.69 deg, same phase as the bob.
+    p.ang.head = Math.sin(t * 1.4 * 0.65) * 0.69 * amp;
+    // Blink: deterministic cycle schedule, head_closed for 130ms at the
+    // start of each 2.8-5.0s cycle (BLINK_CYCLES, pre-walk schedule).
+    var idx = 0, acc = 0;
     while (acc + BLINK_CYCLES[idx % BLINK_CYCLES.length] < t) { acc += BLINK_CYCLES[idx % BLINK_CYCLES.length]; idx++; }
     var into = t - acc;
-    if (into < 0.15 && !faceOverride) p.face = 'head_closed';
-    // Weight shift every ~15s: hips +/- 4px screen over 1.2s.
-    var ws = Math.sin(t * 2 * Math.PI / 15) * 12 * amp;
-    p.rootDx = ws * 0.3;
-    p.ang.hips = ws * 0.02;
-    // Fidgets: one per ~15s block, deterministic kind.
-    var block = Math.floor(t / 15);
-    var kind = FIDGET_KINDS[block % FIDGET_KINDS.length];
-    var ft = t % 15;
-    if (kind === 0 && ft > 4 && ft < 5.6) {          // look around
-      var lt = (ft - 4) / 1.6;
-      p.ang.head = Math.sin(lt * Math.PI) * 12 * amp;
-    } else if (kind === 1 && ft > 6 && ft < 7.2) {  // small stretch
-      var st = (ft - 6) / 1.2;
-      p.ang.shoulder_L = -Math.sin(st * Math.PI) * 18 * amp;
-      p.ang.shoulder_R = -Math.sin(st * Math.PI) * 18 * amp;
-      p.chestSY = 1 + Math.sin(st * Math.PI) * 0.03 * amp;
-    } else if (kind === 2 && ft > 8 && ft < 9.4) {  // hair tuck
-      var ht = (ft - 8) / 1.4;
-      p.ang.shoulder_R = -Math.sin(ht * Math.PI) * 22 * amp;
-      p.ang.elbow_R = Math.sin(ht * Math.PI) * 45 * amp;
-      p.ang.head = Math.sin(ht * Math.PI) * 5 * amp;
-    }
-    // Braid lag: follows head with a delay (phase-shifted sine of breath).
-    p.braidA = Math.sin(t * 2 * Math.PI / 3.0 - 0.6) * 2 * amp;
-    // Torso sway with the breath (rig v2): the chest rolls a touch and the
-    // arms hang looser, so the idle is a body breathing, not a static cutout.
-    p.ang.chest = breath * 2 * amp;
-    p.ang.shoulder_L = breath * 2 * amp;
-    p.ang.shoulder_R = -breath * 2 * amp;
+    if (into < 0.13 && !faceOverride) p.face = 'head_closed';
     if (dancing) {
       p.ang.hips = Math.sin(t * 2 * Math.PI / 0.9) * 4;
       p.ang.chest = Math.sin(t * 2 * Math.PI / 0.9) * 5;
@@ -710,8 +669,12 @@
       p.ang.shoulder_L = -15; p.ang.shoulder_R = 15;
       p.ang.elbow_L = 30; p.ang.elbow_R = -30;
       p.ang.chest = 4;
+      // The seated mesh fallback is still: no idle bob or head sway while
+      // sitting (the sit sprite is primary; this is only its fallback).
+      p.rootDy = 0;
+      p.ang.head = 0;
     }
-    if (Date.now() < excitedUntil) { p.chestSY = 1.02; p.braidA += 2; }
+    if (Date.now() < excitedUntil) { p.braidA += 2; }
     return p;
   }
 
@@ -909,6 +872,7 @@
     // the head bone's world position before building matrices (the braids were
     // already solved from the unshifted head, exactly as before).
     if (pose.headDy) world.head.y += pose.headDy;
+    if (pose.headDx) world.head.x += pose.headDx;
     var mats = buildBoneMats(BONES_F, world, pose, null);
     var face = pose.face || 'head';
     if (faceOverride && Date.now() < faceOverride.until) face = faceOverride.face;
@@ -958,6 +922,7 @@
   function renderSide(pose) {
     var world = solveFK(BONES_S, ORDER_S, pose);
     if (pose.headDy) world.head.y += pose.headDy;
+    if (pose.headDx) world.head.x += pose.headDx;
     var legs = pose._legs;
     var mats = buildBoneMats(BONES_S, world, pose, legs);
     // far leg (IK), far arm, torso, near leg (IK), near arm, braid, head.
@@ -1109,6 +1074,7 @@
     lastFrame = now;
     if (!ctx) return;
     var t = (now - t0) / 1000;
+    stepHeadSpring(now); // head spring: integrate every frame (decays to 0)
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = false;
@@ -1150,6 +1116,18 @@
       pose = idlePose(t);
     }
     if (!pose) pose = idlePose(t);
+    // Head spring: apply the wobble on top of the pose's head. Clone so
+    // a shared holdPose is never mutated in place.
+    if (headSpringActive()) {
+      var sp = {}, sk;
+      for (sk in pose) sp[sk] = pose[sk];
+      sp.ang = {};
+      for (sk in (pose.ang || {})) sp.ang[sk] = pose.ang[sk];
+      sp.ang.head = (sp.ang.head || 0) + headSpring.angle * 57.29578;
+      sp.headDy = (sp.headDy || 0) + headSpring.dy;
+      sp.headDx = (sp.headDx || 0) + headSpring.dx;
+      pose = sp;
+    }
     // Whole-body squash/stretch about the ground point.
     if (pose.scaleX !== 1 || pose.scaleY !== 1) {
       ctx.setTransform(dpr * SCALE * (pose.scaleX || 1), 0, 0, dpr * SCALE * (pose.scaleY || 1),
@@ -1528,7 +1506,15 @@
   }
   function chatReact() { faceOverride = { face: 'head_happy', until: Date.now() + 900 }; playVoice('chat'); }
   function celebrate() { happyPose(); playVoice('celebrate'); }
-  function pet() { happyPose(); playVoice('pet'); }
+  function pet() {
+    // Head-spring impulse (pre-walk character): the head wobbles and
+    // settles. No tap coords reach the Rig (game.js calls pet() bare),
+    // so the lean is a small random one + a hop, as in pixel-char pet().
+    headSpring.angVel += (Math.random() < 0.5 ? -1 : 1) * 0.8;
+    headSpring.dxVel += (Math.random() - 0.5) * 40;
+    headSpring.dyVel += -70;
+    happyPose(); playVoice('pet');
+  }
   function annoyed() {
     faceOverride = { face: 'head_frown', until: Date.now() + 1600 };
     playVoice('poke');
@@ -1558,7 +1544,6 @@
     // calls them, she never translates, charX is HOME_X forever.
     happyPose: happyPose,
     lookPose: lookPose, eatPose: eatPose, bathPose: bathPose,
-    triggerGlance: triggerGlance,
     isBusy: isBusy, getCharX: getCharX, getHandWorld: getHandWorld, getLastRender: getLastRender,
     playVoice: playVoice, blip: blip,
     setCarriedBook: function (v) { carriedBook = !!v; },
