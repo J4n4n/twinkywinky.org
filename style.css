@@ -1,0 +1,306 @@
+/* twinkywinky.org rebuild — DESIGN.md locked visual system */
+@font-face { font-family: 'Vazirmatn'; src: url('fonts/Vazirmatn-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Vazirmatn'; src: url('fonts/Vazirmatn-Bold.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'Press Start 2P'; src: url('fonts/PressStart2P.ttf') format('truetype'); font-display: swap; }
+
+:root {
+  --wall: #F8E7CE; --wall-soft: #FDF3E3; --floor: #E8C9A0;
+  --rug-1: #BFE3D0; --rug-2: #F6C6B8; --rug-3: #FDF6EC;
+  --pink: #F27EA9; --pink-deep: #E85D8A; --pink-soft: #FBDCE8;
+  --ink: #4A3B47; --muted: #8A7A85; --card: #FFFDF8;
+  --gold: #F2B705; --mint: #7FC8A9; --sky: #A8D8EA;
+  --night-wall: #34305A; --night-floor: #453F63; --night-ink: #EDE7F6;
+  --shadow-card: 0 8px 24px rgba(74,59,71,.10);
+  --shadow-pill: 0 4px 14px rgba(74,59,71,.12);
+  --shadow-btn: 0 6px 18px rgba(74,59,71,.14);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body {
+  font-family: 'Vazirmatn', 'Noto Sans Arabic', sans-serif;
+  background: #EAD9BE; color: var(--ink);
+  overflow: hidden;
+}
+img { image-rendering: pixelated; user-select: none; -webkit-user-drag: none; }
+button { font-family: inherit; color: inherit; background: none; border: none; cursor: pointer; }
+input { font-family: inherit; }
+.px-num { font-family: 'Press Start 2P', monospace; font-size: 11px; letter-spacing: 0; }
+
+.app { width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; position: relative; background: var(--wall); overflow: hidden; }
+
+/* ---------- room ---------- */
+/* The room is a FIXED 390x600 stage (all props/character coords are in that
+   space) scaled by JS (fitRoom in game.js) to fill the phone. The wrap is
+   flex:1 so it grows on tall screens instead of capping at 600px — the old
+   max-height cap left a 168px dead cream band on the POCO (437x972) and the
+   band stayed cream in sleep mode. The wrap carries the same wall gradient
+   as the room so any slack around the scaled stage is invisible, day and
+   night. The gradient turns to the FLOOR colour at 88%: the room covers the
+   middle of the wrap, so the bottom slack (below the room's floor band) reads
+   as the floor continuing to the dock instead of a cream strip under it. */
+.room-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; transform-origin: top center; transition: transform .35s ease; z-index: 1; background: linear-gradient(180deg, var(--wall-soft) 0%, var(--wall) 88%, var(--floor) 88%, var(--floor) 100%); }
+body.sheet-open .room-wrap { transform: scale(.70); }
+.room { position: relative; width: 390px; height: 600px; flex: none; overflow: hidden; background: linear-gradient(180deg, var(--wall-soft) 0%, var(--wall) 100%); transition: background .5s; transform-origin: center center; }
+.room .floor-band { position: absolute; left: 0; right: 0; bottom: 0; height: 60px; background: var(--floor); border-top: 1px solid rgba(74,59,71,.18); z-index: 1; }
+.room .rug-img { position: absolute; left: 35px; top: 496px; width: 320px; height: 96px; z-index: 2; }
+#charCanvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; }
+.prop { position: absolute; z-index: 4; cursor: pointer; }
+.prop:active { filter: brightness(1.08); }
+#p-window { left: 130px; top: 58px; width: 130px; height: 130px; z-index: 2; }
+#p-window .win-img { position: absolute; inset: 0; width: 100%; height: 100%; }
+#p-window.opening .win-open { animation: sashSwing .55s ease; transform-origin: 100% 50%; }
+@keyframes sashSwing { 0% { transform: rotate(0deg) scale(1); } 35% { transform: rotate(-16deg) scale(1.02); } 70% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
+/* Gathered curtains: vertical fold stripes + a tie-back waist + a wavy
+   scalloped hem, so they read as bunched fabric framing the window instead
+   of flat mint pillars with a pink band. The pink sash now sits on the
+   waist (the tie-back), tilted like a tied sash. */
+.curtain { position: absolute; top: 100px; width: 36px; height: 92px; z-index: 2;
+  background:
+    repeating-linear-gradient(90deg, rgba(64,110,80,.20) 0 3px, rgba(255,255,255,.14) 3px 6px, rgba(64,110,80,0) 6px 11px),
+    linear-gradient(90deg, #a9d6b6 0%, #d4efdd 50%, #a9d6b6 100%);
+  clip-path: polygon(4% 0, 96% 0, 90% 46%, 100% 78%, 88% 90%, 74% 100%, 60% 90%, 46% 100%, 30% 90%, 14% 100%, 0 80%, 10% 46%);
+}
+.curtain::after { content: ''; position: absolute; left: 3px; right: 3px; top: 42px; height: 7px; background: var(--pink); opacity: .85; border-radius: 4px; }
+.curtain.l::after { transform: rotate(-7deg); }
+.curtain.r::after { transform: rotate(7deg); }
+.curtain.l { left: 92px; } .curtain.r { right: 92px; }
+body.window-open .curtain.l { animation: sway 3s ease-in-out infinite; transform-origin: top center; }
+body.window-open .curtain.r { animation: sway 3s ease-in-out infinite reverse; transform-origin: top center; }
+@keyframes sway { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(4deg); } }
+#p-shelf { left: 10px; top: 300px; width: 68px; height: 62px; z-index: 2; }
+#p-books { left: 14px; top: 314px; width: 50px; height: 30px; z-index: 5; transition: transform .3s ease; }
+#p-books.tipping { transform: rotate(-38deg) translate(-4px, 2px); }
+#p-plant { left: 46px; top: 312px; width: 32px; height: 32px; z-index: 5; }
+#p-clock { left: 12px; top: 200px; width: 58px; height: 60px; z-index: 2; }
+#p-clock .clock-face { position: absolute; inset: 0; width: 100%; height: 100%; }
+#p-clock .clock-hand { position: absolute; left: 0; top: 0; width: 58px; height: 60px; }
+#p-poster { left: 290px; top: 200px; width: 80px; height: 90px; z-index: 2; }
+#p-lamp { left: 350px; top: 360px; width: 36px; height: 180px; z-index: 4; }
+.lamp-glow { position: absolute; left: 250px; top: 330px; width: 140px; height: 220px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(255,214,120,.55) 0%, rgba(255,214,120,0) 70%); z-index: 2; opacity: 0; transition: opacity .4s; pointer-events: none; }
+body.lamp-on .lamp-glow { opacity: 1; }
+body.lamp-on.sleeping .lamp-glow { opacity: .9; }
+#p-plush { left: 318px; top: 482px; width: 56px; height: 56px; z-index: 4; }
+#p-ball { left: 60px; top: 520px; width: 40px; height: 40px; z-index: 4; }
+#p-musicbox { left: 16px; top: 490px; width: 44px; height: 46px; z-index: 4; }
+#p-bowl { left: 290px; top: 520px; width: 40px; height: 35px; z-index: 4; }
+#p-diary { left: 18px; top: 562px; width: 40px; height: 30px; z-index: 4; }
+#falling-book { position: absolute; width: 50px; height: 30px; z-index: 6; display: none; }
+#fairy-lights { position: absolute; left: 0; right: 0; top: 12px; height: 30px; z-index: 2; display: none; pointer-events: none; }
+body.has-fairylights #fairy-lights { display: block; }
+#fairy-lights span { position: absolute; top: 6px; width: 8px; height: 8px; border-radius: 50%; animation: twinkle 1.6s ease-in-out infinite; }
+@keyframes twinkle { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+
+/* HUD pills + meter rings */
+.hud { position: absolute; top: 12px; left: 10px; right: 10px; display: flex; gap: 6px; align-items: center; z-index: 10; }
+.pill { background: rgba(255,253,248,.92); border-radius: 999px; box-shadow: var(--shadow-pill); padding: 6px 10px; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.pill img { width: 18px; height: 18px; }
+.pill .coin-ic { width: 16px; height: 16px; }
+#gear-btn { margin-inline-start: auto; width: 40px; height: 40px; border-radius: 50%; background: rgba(255,253,248,.92); box-shadow: var(--shadow-pill); display: flex; align-items: center; justify-content: center; }
+#gear-btn img { width: 22px; height: 22px; }
+.rings { position: absolute; top: 58px; left: 8px; right: 8px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
+.ring-cluster { display: flex; gap: 4px; }
+.ring { position: relative; width: 36px; height: 36px; background: #fff; border-radius: 50%; box-shadow: var(--shadow-pill); display: flex; align-items: center; justify-content: center; }
+.ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.ring svg circle { fill: none; stroke-width: 3.5; }
+.ring .ring-bg { stroke: rgba(74,59,71,.12); }
+.ring img { width: 20px; height: 20px; position: relative; }
+.ring.low { box-shadow: 0 0 0 3px rgba(232,145,58,.55), var(--shadow-pill); }
+
+/* right rail */
+.rail { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 10px; z-index: 10; }
+.rail button { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,253,248,.94); box-shadow: var(--shadow-btn); display: flex; align-items: center; justify-content: center; }
+.rail button img { width: 24px; height: 24px; }
+
+/* speech bubble */
+#bubble { position: absolute; left: 45px; top: 96px; width: 300px; background: #fff; border-radius: 16px; padding: 7px 10px; font-size: 13px; font-weight: 700; box-shadow: var(--shadow-card); z-index: 11; opacity: 0; transform: translateY(4px) scale(.96); transition: opacity .25s, transform .25s; pointer-events: none; }
+/* NEW BRIEF 2026-11-27 — ONE fixed zone: the bubble is always 300px wide
+   at x 45..345, directly above her head (sayBubble in game.js pins its
+   bottom 8px above her head-top: 156 standing, 210 sitting, 451
+   sleeping — so it drops 50px when she sits, read from the sitting
+   state, never a timer). The tail is on the BOTTOM edge and is aimed
+   ONCE at show time (--tail-x, set by sayBubble) to point DOWN at her
+   head — never sideways at the curtain, the clock, or the back of her
+   hair. She never moves now, so there is no re-aim interval and no
+   side slots, no flip guard. The tail is a 12px diamond sticking 6px
+   below the bubble; the gap to her hair is 8px standing/sleeping, 12px
+   sitting, so its tip nearly touches her hair. The wide bubble
+   necessarily floats over the window glass / curtain tops behind it
+   (no 300px run in the 94-156 band avoids x 92-298); it never covers
+   the clock, poster, rail or shelf. The round-5 compact type is gone:
+   the bubble is always 13px, and the longest pool line (67 chars)
+   fits in 2 lines at 300px. */
+#bubble::after { content: ''; position: absolute; left: calc(var(--tail-x, 150px) - 6px); bottom: -6px; width: 12px; height: 12px; background: #fff; transform: rotate(45deg); border-radius: 2px; transition: left .18s linear; }
+#bubble.show { opacity: 1; transform: translateY(0) scale(1); }
+body.sheet-open #bubble { opacity: 0 !important; }
+#hearts { position: absolute; inset: 0; z-index: 12; pointer-events: none; overflow: hidden; }
+#hearts .h { position: absolute; width: 22px; height: 22px; animation: floatUp 1.4s ease-out forwards; }
+@keyframes floatUp { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-70px) scale(1.1); } }
+#droplets { position: absolute; inset: 0; z-index: 12; pointer-events: none; overflow: hidden; }
+#droplets .d { position: absolute; width: 6px; height: 10px; background: #7FB8D8; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; animation: drop .8s ease-in forwards; }
+@keyframes drop { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(46px); } }
+
+/* sleep */
+#sleep-veil { position: absolute; inset: 0; z-index: 8; background: rgba(52,48,90,.18); opacity: 0; pointer-events: none; transition: opacity .6s; }
+body.sleeping #sleep-veil { opacity: 1; }
+#sleep-z { position: absolute; z-index: 9; pointer-events: none; display: none; }
+body.sleeping #sleep-z { display: block; }
+#sleep-z span { position: absolute; color: #B9A8E8; font-family: 'Press Start 2P', monospace; animation: zfloat 3s ease-in-out infinite; }
+#sleep-z span:nth-child(1) { font-size: 14px; left: 0; top: 18px; }
+#sleep-z span:nth-child(2) { font-size: 18px; left: 16px; top: 0; animation-delay: .5s; }
+#sleep-z span:nth-child(3) { font-size: 11px; left: 34px; top: 10px; animation-delay: 1s; }
+@keyframes zfloat { 0%,100% { transform: translateY(0); opacity: .7; } 50% { transform: translateY(-8px); opacity: 1; } }
+body.sleeping .room-wrap { background: linear-gradient(180deg, #3A3666 0%, var(--night-wall) 88%, var(--night-floor) 88%, var(--night-floor) 100%); }
+body.sleeping .room { background: linear-gradient(180deg, #3A3666 0%, var(--night-wall) 100%); }
+body.sleeping .room .floor-band { background: var(--night-floor); }
+body.sleeping .pill, body.sleeping .ring, body.sleeping .rail button, body.sleeping #gear-btn { background: rgba(60,54,102,.85); color: var(--night-ink); }
+/* Sleep darkens only the round icon discs — the old rule painted the whole
+   dock button (incl. its label) a dark navy tile. */
+body.sleeping .dock .dock-ic { background: rgba(60,54,102,.9); color: var(--night-ink); }
+body.sleeping .dock { background: #2E2A52; }
+body.sleeping .chat-row { background: #2E2A52; }
+body.sleeping .today-strip { background: #2E2A52; color: var(--night-ink); }
+body.sleeping .room .curtain, body.sleeping .prop { opacity: .75; }
+body.sleeping #p-window { filter: brightness(.42) hue-rotate(205deg) saturate(1.3); }
+body.room-pink { --wall: #F9DCE6; --wall-soft: #FDEEF3; }
+body.room-mint { --wall: #D8EFE2; --wall-soft: #EDF8F1; }
+body.room-lavender { --wall: #E4DDF5; --wall-soft: #F1EDFB; }
+/* Night-mode filter lives on the wrap (which contains only the room) so the
+   slack around the scaled stage darkens too instead of staying cream. */
+body.night-mode .room-wrap { filter: brightness(.72) saturate(.85); }
+body.night-mode .dock, body.night-mode .chat-row, body.night-mode .today-strip { filter: brightness(.8); }
+
+/* ---------- dock ---------- */
+.dock { flex: none; height: 104px; display: flex; justify-content: space-evenly; align-items: center; background: var(--card); z-index: 5; padding-bottom: 6px; }
+.dock button { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dock .dock-ic { width: 60px; height: 60px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-btn); display: flex; align-items: center; justify-content: center; }
+.dock .dock-ic img { width: 30px; height: 30px; }
+.dock button:active .dock-ic { transform: scale(.94); background: var(--pink-soft); }
+.dock span { font-size: 13px; font-weight: 700; }
+
+/* ---------- chat row ---------- */
+.chat-row { flex: none; height: 64px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--card); z-index: 5; }
+.chat-row .mic-btn, .chat-row .send-btn { flex: none; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-btn); }
+.chat-row .mic-btn { background: #fff; }
+.chat-row .send-btn { background: var(--pink); }
+.chat-row .mic-btn img, .chat-row .send-btn img { width: 24px; height: 24px; }
+.chat-row .send-btn svg { width: 22px; height: 22px; }
+#chat-input { flex: 1; height: 48px; border: 1px solid rgba(74,59,71,.12); border-radius: 999px; background: #fff; padding: 0 16px; font-size: 15px; outline: none; }
+#chat-input:focus { border-color: var(--pink); }
+.chat-row .quiet-pill { flex: 1; height: 48px; border-radius: 999px; background: rgba(74,59,71,.08); display: none; align-items: center; justify-content: center; font-size: 14px; color: var(--muted); }
+.chat-row .wake-pill { flex: none; height: 48px; padding: 0 16px; border-radius: 999px; background: var(--pink); color: #fff; font-weight: 700; font-size: 14px; display: none; align-items: center; }
+body.sleeping .chat-row .mic-btn, body.sleeping .chat-row .send-btn, body.sleeping #chat-input { display: none; }
+body.sleeping .chat-row .quiet-pill, body.sleeping .chat-row .wake-pill { display: flex; }
+
+/* ---------- today strip ---------- */
+.today-strip { flex: none; height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: var(--card); font-size: 13px; z-index: 5; border-top: 1px solid rgba(74,59,71,.06); cursor: pointer; }
+.today-strip img { width: 18px; height: 18px; }
+.today-strip .streak { margin-inline-start: auto; color: var(--muted); font-size: 12px; }
+
+/* ---------- sheets ---------- */
+.sheet-backdrop { position: absolute; left: 0; right: 0; bottom: 0; height: 420px; background: rgba(74,59,71,.18); z-index: 20; opacity: 0; pointer-events: none; transition: opacity .3s; }
+body.sheet-open .sheet-backdrop { opacity: 1; pointer-events: auto; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 550px; max-height: 65%; background: var(--card); border-radius: 24px 24px 0 0; box-shadow: 0 -12px 40px rgba(74,59,71,.25); z-index: 21; transform: translateY(105%); transition: transform .35s ease; display: flex; flex-direction: column; overflow: hidden; }
+body.sheet-open .sheet { transform: translateY(0); }
+.sheet .handle { flex: none; width: 36px; height: 4px; border-radius: 2px; background: rgba(74,59,71,.25); margin: 10px auto 4px; }
+.sheet header { flex: none; display: flex; align-items: center; gap: 8px; padding: 4px 16px 10px; }
+.sheet header h2 { font-size: 21px; font-weight: 700; }
+.sheet header .coin-pill { margin-inline-start: 4px; }
+.sheet header .x-btn { margin-inline-start: auto; width: 44px; height: 44px; border-radius: 50%; background: rgba(74,59,71,.07); display: flex; align-items: center; justify-content: center; }
+.sheet header .x-btn img { width: 20px; height: 20px; }
+.sheet .sheet-body { flex: 1; overflow-y: auto; padding: 4px 16px 20px; }
+.sheet-panel { display: none; }
+.sheet-panel.active { display: block; }
+.sheet.frosted { background: rgba(255,253,248,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+
+/* shop */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.chip { padding: 7px 13px; border-radius: 999px; background: rgba(74,59,71,.07); font-size: 13px; font-weight: 700; }
+.chip.on { background: var(--pink); color: #fff; }
+.shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.shop-card { background: #fff; border: 1px solid rgba(74,59,71,.08); border-radius: 16px; padding: 12px; box-shadow: var(--shadow-card); text-align: center; }
+.shop-card img.art { width: 96px; height: 96px; }
+.shop-card .nm { font-size: 14px; font-weight: 700; margin: 6px 0 2px; }
+.shop-card .fx { font-size: 12px; color: var(--muted); min-height: 30px; }
+.shop-card .price-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; }
+.shop-card .price-row img { width: 16px; height: 16px; }
+.buy-btn { margin-top: 8px; background: var(--pink); color: #fff; border-radius: 999px; padding: 8px 18px; font-weight: 700; font-size: 14px; }
+.buy-btn:disabled { background: rgba(74,59,71,.25); }
+.shop-card.locked { opacity: .75; }
+.shop-card.locked img.art { filter: grayscale(1); opacity: .45; }
+.shop-card.locked .lock-line { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.shop-card.locked .lock-line img { width: 14px; height: 14px; }
+.shop-card.owned .buy-btn { background: var(--mint); }
+
+/* games */
+.game-card { display: flex; gap: 12px; align-items: center; background: #fff; border-radius: 16px; padding: 12px; box-shadow: var(--shadow-card); margin-bottom: 12px; }
+.game-card .tile { flex: none; width: 76px; height: 76px; border-radius: 14px; background: var(--pink-soft); display: flex; align-items: center; justify-content: center; }
+.game-card .tile img { width: 52px; height: 52px; }
+.game-card .g-info { flex: 1; min-width: 0; }
+.game-card .g-info h3 { font-size: 16px; }
+.game-card .g-info p { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-card .g-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.game-card .play-btn { flex: none; background: var(--pink); color: #fff; border-radius: 999px; padding: 9px 16px; font-weight: 700; }
+.sheet-foot { display: flex; align-items: center; gap: 8px; padding: 12px 4px; font-weight: 700; cursor: pointer; }
+.sheet-foot img { width: 22px; height: 22px; }
+
+/* game play areas */
+.play-area { text-align: center; }
+.play-area .status { font-size: 15px; font-weight: 700; min-height: 24px; margin: 8px 0; }
+.play-area canvas { border-radius: 16px; background: linear-gradient(180deg, #FDF3E3, #F8E7CE); box-shadow: var(--shadow-card); }
+.play-area .row { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+.play-area .row button, .mini-btn { background: var(--pink); color: #fff; border-radius: 999px; padding: 10px 20px; font-weight: 700; font-size: 14px; }
+.play-area .row button.ghost { background: rgba(74,59,71,.12); color: var(--ink); }
+.memory-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+.memory-card { aspect-ratio: 1; border-radius: 14px; background: var(--pink-soft); box-shadow: var(--shadow-card); position: relative; }
+.memory-card img { width: 56px; height: 56px; position: absolute; inset: 0; margin: auto; }
+.memory-card .memory-face { display: none; }
+.memory-card.flipped { background: #fff; }
+.memory-card.flipped .memory-face { display: block; }
+.memory-card.flipped .memory-back { display: none; }
+.memory-card.done { opacity: .45; }
+.timing-track { position: relative; height: 34px; border-radius: 999px; background: rgba(74,59,71,.1); margin: 24px 4px 8px; }
+.timing-zone { position: absolute; top: 0; bottom: 0; background: var(--gold); border-radius: 999px; opacity: .75; }
+.timing-marker { position: absolute; top: -6px; bottom: -6px; width: 8px; margin-left: -4px; background: var(--pink-deep); border-radius: 4px; }
+.hide-spots { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.hide-spots button { background: #fff; border: 1px solid rgba(74,59,71,.1); border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; box-shadow: var(--shadow-card); text-align: start; }
+
+/* chat sheet */
+#chat-log { display: flex; flex-direction: column; gap: 8px; min-height: 200px; }
+.msg { max-width: 82%; padding: 10px 14px; border-radius: 16px; font-size: 15px; box-shadow: var(--shadow-pill); }
+.msg.me { align-self: flex-end; background: var(--pink); color: #fff; border-end-end-radius: 6px; }
+.msg.astolfo { align-self: flex-start; background: #fff; border-end-start-radius: 6px; }
+.msg.sys { align-self: center; background: none; box-shadow: none; color: var(--muted); font-size: 12px; padding: 2px; }
+.chat-sheet-input { flex: none; display: flex; gap: 8px; padding: 10px 16px 16px; }
+.chat-sheet-input input { flex: 1; height: 48px; border: 1px solid rgba(74,59,71,.12); border-radius: 999px; padding: 0 16px; font-size: 15px; outline: none; background: #fff; }
+.chat-sheet-input button { width: 48px; height: 48px; border-radius: 50%; background: var(--pink); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-btn); }
+.presence { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--mint); font-weight: 700; }
+.presence .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); }
+
+/* lists: quests, diary, leaderboard, settings */
+.q-row, .d-row, .lb-row, .s-row { display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 14px; padding: 12px; box-shadow: var(--shadow-card); margin-bottom: 10px; }
+.q-row img, .lb-row img { width: 26px; height: 26px; }
+.q-row .q-info, .d-row .d-info { flex: 1; }
+.q-row h4, .d-row h4 { font-size: 15px; }
+.q-row p, .d-row p { font-size: 13px; color: var(--muted); }
+.q-row .claim-btn { background: var(--gold); border-radius: 999px; padding: 8px 14px; font-weight: 700; font-size: 13px; }
+.q-row .claim-btn:disabled { background: rgba(74,59,71,.15); color: var(--muted); }
+.d-row .d-date { font-size: 12px; color: var(--muted); }
+.lb-row .rank { font-family: 'Press Start 2P', monospace; font-size: 12px; width: 28px; }
+.s-row { justify-content: space-between; font-weight: 700; }
+.s-row .tog { width: 52px; height: 30px; border-radius: 999px; background: rgba(74,59,71,.2); position: relative; }
+.s-row .tog::after { content: ''; position: absolute; top: 3px; inset-inline-start: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.s-row .tog.on { background: var(--pink); }
+.s-row .tog.on::after { transform: translateX(-22px); }
+[dir="rtl"] .s-row .tog.on::after { transform: translateX(22px); }
+.s-row select { font-family: inherit; font-size: 14px; border: 1px solid rgba(74,59,71,.2); border-radius: 10px; padding: 6px 8px; background: #fff; }
+.food-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.food-card { background: #fff; border-radius: 16px; padding: 14px; box-shadow: var(--shadow-card); text-align: center; }
+.food-card img { width: 56px; height: 56px; }
+.food-card h4 { font-size: 15px; margin: 4px 0; }
+.food-card p { font-size: 12px; color: var(--muted); }
+.food-card .buy-btn { margin-top: 8px; }
+.empty-note { text-align: center; color: var(--muted); padding: 24px 8px; font-size: 14px; }
+#install-btn { display: none; width: 100%; margin-top: 12px; background: var(--pink); color: #fff; border-radius: 999px; padding: 12px; font-weight: 700; }
+#toast { position: absolute; bottom: 250px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--ink); color: #fff; padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; z-index: 40; opacity: 0; pointer-events: none; transition: opacity .25s, transform .25s; white-space: nowrap; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+@media (max-width: 360px) { .dock .dock-ic { width: 54px; height: 54px; } }
