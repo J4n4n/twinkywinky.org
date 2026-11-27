@@ -1,203 +1,190 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>آستولفو — twinkywinky.org</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="assets/icons/star-pink.png">
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#fff5f8" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⭐%3C/text%3E%3C/svg%3E" />
+  <title>TwinkyWinky — اتاق آستولفو</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="app" id="app">
-  <div class="room-wrap" id="roomWrap">
-    <div class="room" id="room">
-      <div class="floor-band"></div>
-      <img class="rug-img" id="rug-img" src="assets/props/rug.png" alt="">
-      <div class="lamp-glow" id="lamp-glow"></div>
-
-      <div class="prop" id="p-window" title="پنجره">
-        <img class="win-img win-closed" id="win-closed" src="assets/props/window-closed.png" alt="">
-        <img class="win-img win-open" id="win-open" src="assets/props/window-open.png" alt="" style="display:none">
-      </div>
-      <div class="curtain l"></div><div class="curtain r"></div>
-      <div id="fairy-lights"></div>
-
-      <img class="prop" id="p-shelf" src="assets/props/shelf.png" alt="قفسه">
-      <img class="prop" id="p-books" src="assets/props/books.png" alt="کتاب‌ها">
-      <img class="prop" id="p-plant" src="assets/props/plant.png" alt="گلدان">
-
-      <div class="prop" id="p-clock" title="ساعت">
-        <img class="clock-face" src="assets/props/clock-face.png" alt="">
-        <img class="clock-hand" id="clock-hour" src="assets/props/clock-hand-hour.png" alt="">
-        <img class="clock-hand" id="clock-minute" src="assets/props/clock-hand-minute.png" alt="">
-      </div>
-      <img class="prop" id="p-poster" src="assets/props/poster.png" alt="پوستر">
-      <img class="prop" id="p-lamp" src="assets/props/lamp-off.png" alt="چراغ">
-      <img class="prop" id="p-plush" src="assets/props/plush-bunny.png" alt="عروسک">
-      <img class="prop" id="p-ball" src="assets/props/ball.png" alt="توپ">
-      <img class="prop" id="p-musicbox" src="assets/props/music-box-closed.png" alt="جعبه موزیک">
-      <img class="prop" id="p-bowl" src="assets/props/bowl-empty.png" alt="کاسه غذا">
-      <img class="prop" id="p-diary" src="assets/props/diary.png" alt="دفتر خاطرات">
-      <img id="falling-book" src="assets/props/books.png" alt="">
-
-      <canvas id="charCanvas" width="390" height="600"></canvas>
-      <div id="sleep-veil"></div>
-      <div id="sleep-z"><span>Z</span><span>Z</span><span>Z</span></div>
-      <div id="droplets"></div>
-      <div id="hearts"></div>
-
-      <div class="hud">
-        <div class="pill"><img src="assets/icons/star-pink.png" alt=""> آستولفو <span id="stage-pill" style="color:var(--muted);font-weight:400">· مرحله ۱</span></div>
-        <div class="pill">روز <span class="px-num" id="day-val">1</span></div>
-        <div class="pill"><img class="coin-ic" src="assets/icons/coin.png" alt=""> <span class="px-num" id="coins-val">20</span></div>
-        <button id="gear-btn" title="تنظیمات"><img src="assets/icons/gear.png" alt="تنظیمات"></button>
-      </div>
-      <div class="rings">
-        <div class="ring-cluster" id="rings-right">
-          <div class="ring" data-meter="energy"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#F2B705" stroke-dasharray="97.4" stroke-dashoffset="19.5" stroke-linecap="round"/></svg><img src="assets/icons/bolt.png" alt="انرژی"></div>
-          <div class="ring" data-meter="cleanliness"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#7FB8D8" stroke-dasharray="97.4" stroke-dashoffset="19.5" stroke-linecap="round"/></svg><img src="assets/icons/duck.png" alt="تمیزی"></div>
-          <div class="ring" data-meter="affection"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#E85D8A" stroke-dasharray="97.4" stroke-dashoffset="77.9" stroke-linecap="round"/></svg><img src="assets/icons/heart.png" alt="محبت"></div>
+  <main id="app" class="app-shell" aria-label="اتاق تعاملی آستولفو">
+    <!-- نوار وضعیت بالا -->
+    <header class="hud-top">
+      <div class="hud-row">
+        <div class="pill pill-profile">
+          <span class="badge-dot">🌸</span>
+          <strong id="hud-name">آستولفو</strong>
+          <span class="sep">·</span>
+          <span id="hud-level">سطح ۱</span>
         </div>
-        <div class="ring-cluster" id="rings-left">
-          <div class="ring" data-meter="hunger"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#E8913A" stroke-dasharray="97.4" stroke-dashoffset="63.3" stroke-linecap="round"/></svg><img src="assets/icons/drumstick.png" alt="گرسنگی"></div>
-          <div class="ring" data-meter="happiness"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#F27EA9" stroke-dasharray="97.4" stroke-dashoffset="19.5" stroke-linecap="round"/></svg><img src="assets/icons/face-happy.png" alt="شادی"></div>
+
+        <div class="pill pill-day" id="hud-day">روز ۱</div>
+
+        <div class="pill pill-coins" title="سکه‌ها">
+          <span class="coin-ico">🪙</span>
+          <span id="hud-coins">50</span>
+        </div>
+
+        <button id="btn-sound" class="icon-btn" type="button" aria-label="قطع و وصل صدا" title="صدا">
+          🔊
+        </button>
+      </div>
+
+      <div class="hud-stats">
+        <div class="stat-chip" title="محبت">
+          <span>💖</span>
+          <div class="stat-bar"><i id="bar-love" style="width: 75%"></i></div>
+          <small id="val-love">75</small>
+        </div>
+        <div class="stat-chip" title="سیر بودن">
+          <span>🍓</span>
+          <div class="stat-bar"><i id="bar-hunger" style="width: 80%"></i></div>
+          <small id="val-hunger">80</small>
+        </div>
+        <div class="stat-chip" title="انرژی">
+          <span>✨</span>
+          <div class="stat-bar"><i id="bar-energy" style="width: 85%"></i></div>
+          <small id="val-energy">85</small>
         </div>
       </div>
-      <div class="rail">
-        <button id="rail-shop" title="فروشگاه"><img src="assets/icons/bag.png" alt="فروشگاه"></button>
-        <button id="rail-quests" title="ماموریت‌ها"><img src="assets/icons/trophy.png" alt="ماموریت‌ها"></button>
-        <button id="rail-diary" title="دفتر خاطرات"><img src="assets/icons/bookshelf.png" alt="دفتر خاطرات"></button>
-      </div>
-      <div id="bubble"></div>
-    </div>
-  </div>
-
-  <div class="dock">
-    <button id="dock-feed"><span class="dock-ic"><img src="assets/icons/meal.png" alt=""></span><span>غذا</span></button>
-    <button id="dock-play"><span class="dock-ic"><img src="assets/icons/gamepad.png" alt=""></span><span>بازی</span></button>
-    <button id="dock-wash"><span class="dock-ic"><img src="assets/icons/duck.png" alt=""></span><span>حموم</span></button>
-    <button id="dock-sleep"><span class="dock-ic"><img src="assets/icons/moon.png" alt=""></span><span>خواب</span></button>
-    <button id="dock-praise"><span class="dock-ic"><img src="assets/icons/heart.png" alt=""></span><span>ناز</span></button>
-  </div>
-
-  <div class="chat-row">
-    <button class="mic-btn" id="mic-btn" title="صدا"><img src="assets/icons/speaker.png" alt=""></button>
-    <input id="chat-input" type="text" placeholder="به آستولفو چیزی بگو…" autocomplete="off">
-    <button class="send-btn" id="chat-send" title="ارسال"><svg viewBox="0 0 24 24" fill="none" shape-rendering="crispEdges"><path d="M3 11 L21 3 L14 21 L11 13 Z" fill="#fff"/><path d="M11 13 L21 3" stroke="#F27EA9" stroke-width="1.6"/></svg></button>
-    <div class="quiet-pill">آستولفو خوابه…</div>
-    <button class="wake-pill" id="wake-btn">بیدارش کن</button>
-  </div>
-
-  <div class="today-strip" id="today-strip">
-    <img src="assets/icons/bookshelf.png" alt="">
-    <span id="today-text">روز ۱ — آستولفو تازه به اتاقش اومده!</span>
-    <span class="streak" id="streak-text"></span>
-  </div>
-
-  <div class="sheet-backdrop" id="sheetBackdrop"></div>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true">
-    <div class="handle"></div>
-    <header>
-      <h2 id="sheet-title">فروشگاه</h2>
-      <div class="pill coin-pill" id="sheet-coins"><img class="coin-ic" src="assets/icons/coin.png" alt="" style="width:16px;height:16px"> <span class="px-num" id="sheet-coins-val">20</span></div>
-      <button class="x-btn" id="sheet-x" title="بستن"><img src="assets/icons/x.png" alt="بستن"></button>
     </header>
-    <div class="sheet-body" id="sheet-body">
 
-      <div class="sheet-panel" id="panel-shop">
-        <div class="chips" id="shop-chips"></div>
-        <div class="shop-grid" id="shop-grid"></div>
+    <!-- صحنه‌ی اتاق و کاراکتر -->
+    <section id="room-stage" class="room-stage">
+      <img id="room-bg-day" class="room-bg active" src="assets/room-day.png" alt="اتاق روز" draggable="false" />
+      <img id="room-bg-night" class="room-bg" src="assets/room-night.png" alt="اتاق شب" draggable="false" />
+      <div class="night-vignette" aria-hidden="true"></div>
+
+      <!-- حباب گفتگوی فارسی (در ناحیه‌ی امن بالا بدون افتادن روی سر کاراکتر) -->
+      <div id="speech-bubble" class="speech-bubble" role="status" aria-live="polite">
+        <span id="speech-text">سلام! خوش اومدی به اتاقم 🌸</span>
       </div>
 
-      <div class="sheet-panel" id="panel-games">
-        <div id="games-list"></div>
-        <div class="sheet-foot" id="games-leaderboard"><img src="assets/icons/trophy.png" alt=""> جدول امتیازها</div>
+      <!-- سایه‌ی نرم زیر پای کاراکتر روی فرش -->
+      <div id="char-shadow" class="char-shadow" aria-hidden="true"></div>
+
+      <!-- کانواس رندر شفاف کاراکتر (بدن ثابت، فقط حرکت سر و پلک و تغییر ژست نشستن/خواب) -->
+      <canvas id="char-canvas" class="char-canvas" width="600" height="900"></canvas>
+
+      <!-- لایه‌ی افکت‌ها (قلب‌ها، جرقه‌ها، Zzz) -->
+      <div id="fx-layer" class="fx-layer" aria-hidden="true"></div>
+
+      <!-- نواحی تعاملی دقیق روی اتاق و کاراکتر -->
+      <button id="hs-shelf" class="hotspot hs-shelf" type="button" aria-label="لمس قفسه کتاب" title="قفسه کتاب"></button>
+      <button id="hs-clock" class="hotspot hs-clock" type="button" aria-label="لمس ساعت دیواری" title="ساعت دیواری"></button>
+      <button id="hs-poster" class="hotspot hs-poster" type="button" aria-label="لمس پوستر ستاره" title="پوستر"></button>
+      <button id="hs-lamp" class="hotspot hs-lamp" type="button" aria-label="روشن و خاموش کردن چراغ" title="چراغ"></button>
+      <button id="hs-rug" class="hotspot hs-rug" type="button" aria-label="لمس فرش برای نشستن چهارزانو" title="نشستن روی فرش"></button>
+      <button id="hs-bunny" class="hotspot hs-bunny" type="button" aria-label="لمس عروسک خرگوشی" title="خرگوشی"></button>
+      <button id="hs-bowl" class="hotspot hs-bowl" type="button" aria-label="لمس کاسه غذا" title="غذا دادن"></button>
+      <button id="hs-head" class="hotspot hs-head" type="button" aria-label="ناز کردن سر آستولفو" title="ناز کردن سر"></button>
+
+      <!-- دکمه‌های سریع کناری -->
+      <div class="side-tools">
+        <button id="btn-open-chatlog" class="side-pill" type="button" title="تاریخچه چت">💬</button>
+        <button id="btn-open-rank" class="side-pill" type="button" title="لیدربورد">🏆</button>
+        <button id="btn-open-shop" class="side-pill" type="button" title="فروشگاه">🛍️</button>
       </div>
+    </section>
 
-      <div class="sheet-panel" id="panel-quests"><div id="quests-list"></div></div>
-      <div class="sheet-panel" id="panel-diary"><div id="diary-list"></div></div>
-      <div class="sheet-panel" id="panel-leaderboard"><div id="leaderboard-list"></div></div>
+    <!-- کنترل‌های پایین و چت داخل سایت -->
+    <footer class="bottom-panel">
+      <nav class="action-dock" aria-label="اکشن‌ها">
+        <button id="act-pet" class="dock-btn" type="button">
+          <span class="dock-ico">💗</span>
+          <span>ناز کردن</span>
+        </button>
+        <button id="act-sit" class="dock-btn" type="button">
+          <span class="dock-ico">🪑</span>
+          <span id="sit-label">چهارزانو</span>
+        </button>
+        <button id="act-sleep" class="dock-btn" type="button">
+          <span class="dock-ico">🌙</span>
+          <span id="sleep-label">خواب</span>
+        </button>
+        <button id="act-game" class="dock-btn" type="button">
+          <span class="dock-ico">🎮</span>
+          <span>بازی</span>
+        </button>
+        <button id="act-shop" class="dock-btn" type="button">
+          <span class="dock-ico">🛍️</span>
+          <span>فروشگاه</span>
+        </button>
+      </nav>
 
-      <div class="sheet-panel" id="panel-food"><div class="food-grid" id="food-grid"></div></div>
+      <form id="chat-form" class="chat-bar" autocomplete="off">
+        <input id="chat-input" type="text" maxlength="120" placeholder="به آستولفو یه چیزی بگو..." />
+        <button class="chat-send" type="submit" aria-label="ارسال پیام">➤</button>
+      </form>
+    </footer>
 
-      <div class="sheet-panel" id="panel-settings">
-        <div class="s-row"><span>صدا</span><button class="tog on" id="set-mute" aria-label="صدا"></button></div>
-        <div class="s-row"><span>حرکت کمتر</span><button class="tog" id="set-motion" aria-label="حرکت کمتر"></button></div>
-        <div class="s-row"><span>شب / روز اتاق</span><select id="set-daynight"><option value="auto">خودکار (ساعت تهران)</option><option value="day">روز</option><option value="night">شب</option></select></div>
-        <div class="s-row"><span>پشتیبان (JSON)</span><span><button class="mini-btn" id="btn-export">دانلود</button> <button class="mini-btn" id="btn-import" style="background:rgba(74,59,71,.12);color:var(--ink)">بازگردانی</button><input type="file" id="import-file" accept="application/json" style="display:none"></span></div>
-        <div class="s-row"><span>شروع دوباره</span><button class="mini-btn" id="btn-reset" style="background:rgba(74,59,71,.12);color:var(--ink)">ریست</button></div>
-        <button id="install-btn">نصب روی صفحه‌ی اصلی</button>
-      </div>
-
-      <div class="sheet-panel" id="panel-star">
-        <div class="play-area">
-          <div class="status" id="star-status"></div>
-          <canvas id="star-canvas" width="340" height="250"></canvas>
-          <div class="row"><span class="pill">امتیاز <span class="px-num" id="star-score">0</span></span><span class="pill">زمان <span class="px-num" id="star-time">30</span></span></div>
-          <div class="row"><button id="star-start">شروع</button><button class="ghost" id="star-quit">خروج</button></div>
+    <!-- مودال‌ها -->
+    <div id="modal-overlay" class="modal-overlay hidden" role="dialog" aria-modal="true">
+      <!-- فروشگاه -->
+      <div id="modal-shop" class="modal-card hidden">
+        <div class="modal-head">
+          <h2>🛍️ فروشگاه اتاق</h2>
+          <div class="modal-coins">🪙 <span id="shop-coins">50</span></div>
+          <button class="modal-close" data-close type="button" aria-label="بستن">✕</button>
         </div>
-      </div>
-
-      <div class="sheet-panel" id="panel-memory">
-        <div class="play-area">
-          <div class="status" id="memory-status"></div>
-          <div class="memory-grid" id="memory-grid"></div>
-          <div class="row"><span class="pill">حرکت <span class="px-num" id="memory-moves">0</span></span><button class="ghost" id="memory-quit">خروج</button></div>
+        <div id="shop-tabs" class="chip-tabs">
+          <button class="chip-tab active" data-cat="all" type="button">همه</button>
+          <button class="chip-tab" data-cat="food" type="button">خوراکی</button>
+          <button class="chip-tab" data-cat="gift" type="button">هدیه و اکسسوری</button>
+          <button class="chip-tab" data-cat="decor" type="button">وسایل اتاق</button>
         </div>
+        <div id="shop-grid" class="shop-grid"></div>
       </div>
 
-      <div class="sheet-panel" id="panel-timing">
-        <div class="play-area">
-          <div class="status" id="timing-status"></div>
-          <div class="timing-track"><div class="timing-zone" id="timing-zone"></div><div class="timing-marker" id="timing-marker" style="left:0%"></div></div>
-          <div class="row"><span class="pill">دور <span class="px-num" id="timing-round">0/10</span></span><span class="pill">امتیاز <span class="px-num" id="timing-score">0</span></span></div>
-          <div class="row"><button id="timing-tap">بزن!</button><button class="ghost" id="timing-quit">خروج</button></div>
+      <!-- مینی‌گیم ستاره‌چین -->
+      <div id="modal-game" class="modal-card hidden">
+        <div class="modal-head">
+          <h2>🎮 ستاره‌چین آستولفو</h2>
+          <button class="modal-close" data-close type="button" aria-label="بستن">✕</button>
         </div>
-      </div>
-
-      <div class="sheet-panel" id="panel-hideseek">
-        <div class="play-area">
-          <div class="status" id="hideseek-status"></div>
-          <p style="font-size:14px;color:var(--muted)">آستولفو قایم شده! توی اتاق دنبالش بگرد — فقط ۲ شانس داری.</p>
-          <div class="hide-spots">
-            <button data-spot="curtain">پشت پرده‌ی پنجره</button>
-            <button data-spot="shelf">پشت قفسه‌ی کتاب</button>
-            <button data-spot="rug">زیر قالیچه</button>
+        <div class="game-hud">
+          <span>امتیاز: <strong id="game-score">0</strong></span>
+          <span>زمان: <strong id="game-timer">30</strong> ثانیه</span>
+          <span>رکورد: <strong id="game-best">0</strong></span>
+        </div>
+        <div class="game-wrap">
+          <canvas id="game-canvas" width="380" height="360"></canvas>
+          <div id="game-overlay" class="game-overlay">
+            <p id="game-status">ستاره‌ها ⭐ و قلب‌ها 💖 رو بگیر و از ابرهای خواب‌آلود ☁️ دوری کن!</p>
+            <button id="btn-game-start" class="primary-btn" type="button">شروع بازی</button>
           </div>
-          <div class="row"><button class="ghost" id="hideseek-quit">خروج</button></div>
         </div>
       </div>
 
-    </div>
-    <div class="chat-sheet-input" id="chat-sheet-input" style="display:none">
-      <input id="chat-input-sheet" type="text" placeholder="به آستولفو چیزی بگو…" autocomplete="off">
-      <button id="chat-send-sheet" title="ارسال"><svg viewBox="0 0 24 24" fill="none" shape-rendering="crispEdges" style="width:22px;height:22px"><path d="M3 11 L21 3 L14 21 L11 13 Z" fill="#fff"/><path d="M11 13 L21 3" stroke="#F27EA9" stroke-width="1.6"/></svg></button>
-    </div>
-  </div>
+      <!-- لیدربورد -->
+      <div id="modal-rank" class="modal-card hidden">
+        <div class="modal-head">
+          <h2>🏆 لیدربورد</h2>
+          <button class="modal-close" data-close type="button" aria-label="بستن">✕</button>
+        </div>
+        <div class="name-row">
+          <input id="player-name-input" type="text" maxlength="18" placeholder="نام نمایشی تو..." />
+          <button id="btn-save-name" class="primary-btn small" type="button">ذخیره</button>
+        </div>
+        <div id="rank-list" class="rank-list"></div>
+      </div>
 
-  <div id="toast"></div>
-</div>
+      <!-- تاریخچه چت -->
+      <div id="modal-chat" class="modal-card hidden">
+        <div class="modal-head">
+          <h2>💬 گفتگوی من و آستولفو</h2>
+          <button class="modal-close" data-close type="button" aria-label="بستن">✕</button>
+        </div>
+        <div id="chat-log-list" class="chat-log-list"></div>
+      </div>
+    </div>
+  </main>
 
-<script src="lines.js"></script>
-<script src="items-data.js"></script>
-<!-- PIXEL MESH RIG v4 (2026-11-27): REVERTED from the vector rig — the owner
-     rejected the style change outright («چرا کرکتر رو کلا عوض کردی»). The
-     ORIGINAL pixel character is back, driven by the skeletal mesh rig
-     (mesh-data.js + rig.js). ?v=4 cache-busts the phone so the vector
-     build can never be served again.
-     MERGE 2026-11-28: pre-walk character (head-only idle) — rig.js and
-     game.js bumped to ?v=5 so the phone can never serve the cached
-     round-7 files. mesh-data.js stays ?v=4 (unchanged). -->
-<script src="mesh-data.js?v=4"></script>
-<script src="rig.js?v=5"></script>
-<script src="game.js?v=5"></script>
-<script src="chat.js"></script>
-<script>
-  window.addEventListener('load', function () {
-    if (window.Game) window.Game.init();
-    if (window.Chat) window.Chat.init();
-  });
-</script>
+  <script src="app.js"></script>
 </body>
 </html>
