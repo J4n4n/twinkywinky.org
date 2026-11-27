@@ -149,6 +149,11 @@
   // the repo, undeleted). Only the sit sprites load — the rug sit is
   // still sprite-based (frontSitSprite).
   var FRONT_FILES = ['front-sit-0', 'front-sit-1', 'front-sit-closed'];
+  // GEMINI 2026-11-28 (approved 2D character): the 5 Gemini states,
+  // chroma-keyed PNGs on the 1600x1930 front-sprite grid (same grid as
+  // the pixel front sprites). Loaded into the same SPR map under the
+  // 'gemini-' keys; assets/gemini/char-<state>.png.
+  var GEMINI_FILES = ['idle', 'blink', 'tilt', 'happy', 'sit'];
   var SPR = {};
   var readyPromise = null;
 
@@ -171,6 +176,7 @@
     jobs.push(loadImg('assets/props/books.png').then(function (im) { IMG.booksStack = im; }));
     SPRITE_FILES.forEach(function (n) { jobs.push(loadImg('assets/sprites-side/' + n + '.png').then(function (im) { SPR[n] = im; })); });
     FRONT_FILES.forEach(function (n) { jobs.push(loadImg('assets/sprites-front/' + n + '.png').then(function (im) { SPR[n] = im; })); });
+    GEMINI_FILES.forEach(function (n) { jobs.push(loadImg('assets/gemini/char-' + n + '.png').then(function (im) { SPR['gemini-' + n] = im; })); });
     readyPromise = Promise.all(jobs);
     return readyPromise;
   }
@@ -221,8 +227,38 @@
   // breath moved the whole body, which the pre-walk character never did.
   // This function now always returns null so frame() falls through to
   // the mesh. The sit sprites (frontSitSprite) are untouched.
+  // GEMINI 2026-11-28 (approved 2D character): the home idle is the
+  // Gemini 2D character (flat sprites), NOT the mesh. Head-only motion:
+  // blink swaps (130ms per BLINK_CYCLES) + an occasional tilt swap
+  // (1.0s per TILT_CYCLES); the body never moves — the sprite is drawn
+  // undeformed, so there is no breath, weight-shift, fidget or braid
+  // lag (the mesh idlePose's bob/sway/spring do not apply to a flat
+  // sprite; see the head-spring note in pet()). faceOverride (pet /
+  // chat / poke / sleepy) maps to a Gemini state; there is no frown
+  // image, so head_frown falls back to the neutral idle.
   function frontIdleSprite(t) {
-    return null;
+    if (mode !== 'front' || anim || holdPose || walkState) return null;
+    if (sitting || dancing || carriedBook) return null;
+    if (gear.head || gear.neck || gear.braid || gear.outfit) return null;
+    if (faceOverride) {
+      if (Date.now() < faceOverride.until) {
+        var f = faceOverride.face;
+        if (f === 'head_happy') return SPR['gemini-happy'] || null;
+        if (f === 'head_tilt') return SPR['gemini-tilt'] || null;
+        if (f === 'head_sleep' || f === 'head_closed') return SPR['gemini-blink'] || null;
+        return SPR['gemini-idle'] || null;
+      }
+      faceOverride = null;
+    }
+    if (Date.now() < excitedUntil) return SPR['gemini-idle'] || null;
+    if (reducedMotion) return SPR['gemini-idle'] || null;
+    var idx = 0, acc = 0;
+    while (acc + BLINK_CYCLES[idx % BLINK_CYCLES.length] < t) { acc += BLINK_CYCLES[idx % BLINK_CYCLES.length]; idx++; }
+    if (t - acc < 0.13) return SPR['gemini-blink'] || null;
+    var tidx = 0, tacc = 0;
+    while (tacc + TILT_CYCLES[tidx % TILT_CYCLES.length] < t) { tacc += TILT_CYCLES[tidx % TILT_CYCLES.length]; tidx++; }
+    if (t - tacc < 1.0) return SPR['gemini-tilt'] || null;
+    return SPR['gemini-idle'] || null;
   }
 
   // Front-sit sprite selection (rebuild round 4, face composite +
@@ -248,26 +284,17 @@
   // NOT apply here. The same guards as frontIdleSprite apply — no
   // dancing, carried book, gear, faceOverride, excited — sitting is
   // the only difference.
+  // GEMINI 2026-11-28: the sit image already has her eyes closed and
+  // is a single frame — no blink/breath alternation (the pixel
+  // front-sit-0/1/closed set is retired). faceOverride / excited are
+  // deliberately NOT guards here: a pet while sitting must keep her
+  // seated (the happy state is a standing sprite; falling through to
+  // it would pop her upright while body.sitting stays set).
   function frontSitSprite(t) {
     if (mode !== 'front' || !sitting || anim || holdPose || walkState) return null;
     if (dancing || carriedBook) return null;
     if (gear.head || gear.neck || gear.braid || gear.outfit) return null;
-    if (faceOverride) {
-      if (Date.now() < faceOverride.until) return null;
-      faceOverride = null;
-    }
-    if (Date.now() < excitedUntil) return null;
-    var idx = 0, acc = 0;
-    while (acc + BLINK_CYCLES[idx % BLINK_CYCLES.length] < t) { acc += BLINK_CYCLES[idx % BLINK_CYCLES.length]; idx++; }
-    if (t - acc < 0.13) return SPR['front-sit-closed'] || null;
-    var bt = t % 3.0, breath;
-    if (bt < 0.8) breath = 0;
-    else if (bt < 1.05) breath = (bt - 0.8) / 0.25;
-    else if (bt < 1.85) breath = 1;
-    else if (bt < 2.1) breath = 1 - (bt - 1.85) / 0.25;
-    else breath = 0;
-    if (reducedMotion) breath = 0;
-    return SPR[breath >= 0.5 ? 'front-sit-1' : 'front-sit-0'] || null;
+    return SPR['gemini-sit'] || null;
   }
 
   // ---------------- bone tree (front pivots, RIG-DATA §2/§3) ----------------
@@ -339,6 +366,9 @@
   var anim = null;              // {t0, dur, sample(t01)->patch, done, hold}
   var holdPose = null;          // pose held after an animation (e.g. upset)
   var busy = false;
+  var busyUntil = 0; // GEMINI 2026-11-28: faceOverride poses (happy/eat/
+  // bath/look) no longer run a mesh anim, so they set a busy deadline
+  // instead — isBusy() stays true for the pose duration.
   var reducedMotion = false;
   var dancing = false;
   var sitting = false;
@@ -1038,21 +1068,17 @@
 
   // ---------------- sleep ----------------
   function renderSleep(t) {
-    // Lying figure: draw just the figure region of sleep_lying.png
-    // (x 220-1500, y 1560-1820) in SCREEN space, 300px wide on the rug.
-    var im = IMG.sleep_lying;
-    if (!im) return;
-    var breath = Math.sin((t % 4.0) / 4.0 * 2 * Math.PI); // 4.0s breathing loop
-    var sy = 1 + breath * 0.008;
-    var dw = 340, dh = dw * 260 / 1280;
-    var dx = 215 - dw / 2, dy = 566 - dh;
+    // GEMINI 2026-11-28: no sleep (lying) image exists, so sleep reuses
+    // the blink sprite — she stands with her eyes closed under the DOM
+    // sleep veil + Zzz (game.js toggleSleep). The pixel lying figure
+    // (IMG.sleep_lying) is retired; drawing it would show the old pixel
+    // character. No breathing scale: a flat sprite must not squash.
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.save();
-    ctx.translate(215, 566);
-    ctx.scale(1, sy);
-    ctx.translate(-215, -566);
-    ctx.drawImage(im, 220, 1560, 1280, 260, dx, dy, dw, dh);
-    ctx.restore();
+    var im = SPR['gemini-blink'];
+    if (im) {
+      frontSpriteTransform();
+      ctx.drawImage(im, 0, 0);
+    }
   }
 
   // ---------------- main loop ----------------
@@ -1134,6 +1160,10 @@
         dpr * charX - dpr * SCALE * (pose.scaleX || 1) * 800,
         dpr * groundY - dpr * SCALE * (pose.scaleY || 1) * 1850);
     }
+    // GEMINI 2026-11-28: lastRender.face must name the SPRITE shown
+    // (idle/blink/tilt/happy/sit), not the mesh pose face — the harness
+    // reads it to tell which Gemini state is on screen.
+    var shownFace = pose.face || 'head';
     if (mode === 'side') {
       var spr = spriteFor(pose, walkState, anim);
       if (spr) {
@@ -1176,6 +1206,7 @@
           // path above. No facing flip in front view.
           frontSpriteTransform();
           ctx.drawImage(sspr, 0, 0);
+          shownFace = 'head_closed'; // GEMINI: the sit image has her eyes closed
         } else {
           // HOME IDLE (front): draw the pixel-grid front-idle sprite
           // undeformed when frontIdleSprite() has one (no anim / hold / walk,
@@ -1190,13 +1221,18 @@
             // path above. No facing flip in front view.
             frontSpriteTransform();
             ctx.drawImage(fspr, 0, 0);
+            // GEMINI: name the shown sprite for lastRender.
+            if (fspr === SPR['gemini-happy']) shownFace = 'head_happy';
+            else if (fspr === SPR['gemini-blink']) shownFace = 'head_closed';
+            else if (fspr === SPR['gemini-tilt']) shownFace = 'head_tilt';
+            else shownFace = 'head';
           } else {
             renderFront(pose);
           }
         }
       }
     }
-    lastRender = { mode: mode, charX: charX, face: pose.face || 'head' };
+    lastRender = { mode: mode, charX: charX, face: shownFace };
     ctx.restore(); // release the room-bounds clip
   }
 
@@ -1423,52 +1459,48 @@
   }
 
   function happyPose(done) {
-    // ~1.6s: squash -> bounce up -> settle -> lean. Ends back at idle.
-    // Two-beat bounce (Celeste rule: the deformation is aggressive but
-    // lasts only a beat): 8% squash, 8% stretch, arms thrown up 32deg.
+    // GEMINI 2026-11-28: no mesh anim — the happy state is a face swap
+    // (gemini-happy) for 1.6s via faceOverride. The old squash/bounce/
+    // arms-up keyframes deformed the pixel mesh; running them would
+    // flash the pixel character for 1.6s. busyUntil keeps isBusy()
+    // true for the same 1.6s (game.js gates prop taps on it).
     mode = 'front'; clearHold();
-    var keys = [
-      { t: 0.00, v: { face: 'head', ang: {} }, e: 'lin' },
-      { t: 0.125, v: { face: 'head_happy', ang: { head: 10 }, scaleY: 0.92, scaleX: 1.06, hipsDy: 12, braidA: -4 }, e: 'in' },
-      { t: 0.3125, v: { face: 'head_happy', ang: { head: -8, shoulder_L: 32, shoulder_R: -32 }, scaleY: 1.08, scaleX: 0.95, hipsDy: -30, braidA: 16 }, e: 'out' },
-      { t: 0.50, v: { face: 'head_happy', ang: { head: 8 }, scaleY: 0.92, scaleX: 1.06, hipsDy: 6, braidA: -5 }, e: 'in' },
-      { t: 0.75, v: { face: 'head_happy', ang: { head: 8, chest: 8 }, scaleY: 1.0, scaleX: 1.0, hipsDy: 0, braidA: 2 }, e: 'out' },
-      { t: 1.00, v: { face: 'head', ang: {} }, e: 'out' }
-    ];
-    runAnim({ dur: 1.6, sample: function (t01) { return sampleKeys(keys, t01); } }, function () { if (done) done(); });
+    faceOverride = { face: 'head_happy', until: Date.now() + 1600 };
+    busyUntil = Date.now() + 1600;
+    if (done) setTimeout(done, 1600);
   }
 
   function lookPose(dirDeg, dur, done) {
+    // GEMINI 2026-11-28: no mesh anim — looking at a prop (poster/clock)
+    // is a tilt-sprite swap (gemini-tilt) for the duration. The head-turn
+    // direction (dirDeg) has no meaning on a flat sprite; the tilt frame
+    // is the single "she looks" state. Shelf taps never call this
+    // (bubble only; the glance was removed in the merge).
     mode = 'front'; clearHold();
-    var keys = [
-      { t: 0, v: { face: 'head', ang: {} }, e: 'lin' },
-      { t: 0.25, v: { face: 'head', ang: { head: dirDeg, chest: dirDeg * 0.3 } }, e: 'out' },
-      { t: 0.75, v: { face: 'head', ang: { head: dirDeg, chest: dirDeg * 0.3 } }, e: 'lin' },
-      { t: 1, v: { face: 'head', ang: {} }, e: 'inOut' }
-    ];
-    runAnim({ dur: dur || 2.0, sample: function (t01) { return sampleKeys(keys, t01); } }, done);
+    var d = (dur || 2.0) * 1000;
+    faceOverride = { face: 'head_tilt', until: Date.now() + d };
+    busyUntil = Date.now() + d;
+    if (done) setTimeout(done, d);
   }
 
   function eatPose(done) {
+    // GEMINI 2026-11-28: no mesh anim — eating is an eyes-closed swap
+    // (gemini-blink) for 1.4s via faceOverride. The old lean/reach
+    // keyframes would flash the pixel mesh.
     mode = 'front'; clearHold();
-    var keys = [
-      { t: 0, v: { face: 'head', ang: {} }, e: 'lin' },
-      { t: 0.3, v: { face: 'head', ang: { chest: 12, head: 10, shoulder_R: 30, elbow_R: 60 } }, e: 'out' },
-      { t: 0.6, v: { face: 'head_closed', ang: { chest: 14, head: 12, shoulder_R: 32, elbow_R: 62 } }, e: 'lin' },
-      { t: 1, v: { face: 'head', ang: {} }, e: 'out' }
-    ];
-    runAnim({ dur: 1.4, sample: function (t01) { return sampleKeys(keys, t01); } }, done);
+    faceOverride = { face: 'head_closed', until: Date.now() + 1400 };
+    busyUntil = Date.now() + 1400;
+    if (done) setTimeout(done, 1400);
   }
 
   function bathPose(done) {
+    // GEMINI 2026-11-28: no mesh anim — the bath is a happy swap
+    // (gemini-happy) for 2.0s via faceOverride. The old sway/arms
+    // keyframes would flash the pixel mesh.
     mode = 'front'; clearHold();
-    var keys = [
-      { t: 0, v: { face: 'head', ang: {} }, e: 'lin' },
-      { t: 0.4, v: { face: 'head_happy', ang: { head: -10, shoulder_L: -30, shoulder_R: 30, elbow_L: 40, elbow_R: 40 } }, e: 'out' },
-      { t: 0.7, v: { face: 'head_happy', ang: { head: 10, shoulder_L: -20, shoulder_R: 20, elbow_L: 50, elbow_R: 50 } }, e: 'inOut' },
-      { t: 1, v: { face: 'head', ang: {} }, e: 'out' }
-    ];
-    runAnim({ dur: 2.0, sample: function (t01) { return sampleKeys(keys, t01); } }, done);
+    faceOverride = { face: 'head_happy', until: Date.now() + 2000 };
+    busyUntil = Date.now() + 2000;
+    if (done) setTimeout(done, 2000);
   }
 
   // ---------------- init / API ----------------
@@ -1510,6 +1542,12 @@
     // Head-spring impulse (pre-walk character): the head wobbles and
     // settles. No tap coords reach the Rig (game.js calls pet() bare),
     // so the lean is a small random one + a hop, as in pixel-char pet().
+    // GEMINI 2026-11-28: the spring still integrates (frame() applies it
+    // to the mesh pose), but a flat sprite has no separate head — the
+    // impulse has NO visible effect on the Gemini sprites. Kept
+    // (harmless) so the mesh fallback still wobbles; do NOT fake a
+    // sprite wobble by rotating the whole sprite (it would swing the
+    // boots).
     headSpring.angVel += (Math.random() < 0.5 ? -1 : 1) * 0.8;
     headSpring.dxVel += (Math.random() - 0.5) * 40;
     headSpring.dyVel += -70;
@@ -1526,7 +1564,7 @@
     faceOverride = { face: 'head_frown', until: Date.now() + 2200 };
     playVoice('upset');
   }
-  function isBusy() { return busy || !!anim || !!walkState; }
+  function isBusy() { return busy || !!anim || !!walkState || Date.now() < busyUntil; }
   function getCharX() { return charX; }
   function getHandWorld() { return handWorld; }
   function getLastRender() { return lastRender; }
