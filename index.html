@@ -1,200 +1,198 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html dir="rtl" lang="fa">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>آستولفو — twinkywinky.org</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="assets/icons/star-pink.png">
-<link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>بزودی | twinkywinky.org</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#f6d7e3;font-family:'Vazirmatn',system-ui,sans-serif}
+  #stage{position:fixed;inset:0}
+  #stage canvas{display:block;opacity:0;transition:opacity .6s ease}
+  #stage canvas.ready{opacity:1}
+  #poster{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#f6d7e3;transition:opacity .6s ease}
+  #poster.gone{opacity:0;pointer-events:none}
+  #st{position:fixed;top:0;left:0;opacity:0;pointer-events:none;font-size:1px}
+  header{position:fixed;top:0;left:0;right:0;z-index:5;text-align:center;padding:calc(18px + env(safe-area-inset-top)) 16px 0;pointer-events:none}
+  h1{margin:0;font-size:clamp(24px,5.4vw,44px);font-weight:900;color:#3d2b33;line-height:1.5;text-shadow:0 2px 12px rgba(246,215,227,.9)}
+  h1 .fem{color:#e75480;position:relative;white-space:nowrap}
+  h1 .fem::after{content:"";position:absolute;left:0;right:0;bottom:.08em;height:.32em;background:#f7a8c4;opacity:.55;border-radius:99px;z-index:-1}
+  #loadbar{position:fixed;top:0;left:0;height:3px;width:0;background:#e75480;z-index:8;transition:width .2s ease}
+  #loadmsg{position:fixed;top:calc(50% - 14px);left:0;right:0;text-align:center;color:#a34d6d;font-size:15px;z-index:4;pointer-events:none}
+  #ui{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom));left:0;right:0;display:flex;gap:10px;justify-content:center;z-index:5}
+  #ui button{font:inherit;font-size:16px;font-weight:700;padding:12px 26px;border-radius:999px;border:2px solid #e58aa8;background:rgba(255,255,255,.92);color:#c24b78;cursor:pointer;min-height:48px;box-shadow:0 4px 16px rgba(194,75,120,.18);transition:background .2s,color .2s}
+  #ui button.on{background:#f7a8c4;color:#fff;border-color:#f7a8c4}
+  #ui button:disabled{opacity:.45;cursor:wait}
+  #hint{position:fixed;bottom:calc(82px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#a34d6d;font-size:14px;z-index:5;pointer-events:none;text-shadow:0 1px 8px rgba(246,215,227,.9)}
+  footer{position:fixed;bottom:calc(4px + env(safe-area-inset-bottom));left:0;right:0;text-align:center;color:#b98a9a;font-size:11px;z-index:4;pointer-events:none}
+  #hearts{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:6}
+  #hearts span{position:absolute;font-size:26px;color:#ff5c8a;animation:up 1.2s ease-out forwards;text-shadow:0 1px 4px rgba(0,0,0,.2)}
+  @keyframes up{from{transform:translateY(0) scale(.7);opacity:1}to{transform:translateY(-90px) scale(1.2);opacity:0}}
+  @media (prefers-reduced-motion: reduce){ #stage canvas{transition:none} }
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/loaders/GLTFLoader.js":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js","three/addons/controls/OrbitControls.js":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js"}}</script>
 </head>
 <body>
-<div class="app" id="app">
-  <div class="room-wrap" id="roomWrap">
-    <div class="room" id="room">
-      <div class="floor-band"></div>
-      <img class="rug-img" id="rug-img" src="assets/props/rug.png" alt="">
-      <div class="lamp-glow" id="lamp-glow"></div>
-
-      <div class="prop" id="p-window" title="پنجره">
-        <img class="win-img win-closed" id="win-closed" src="assets/props/window-closed.png" alt="">
-        <img class="win-img win-open" id="win-open" src="assets/props/window-open.png" alt="" style="display:none">
-      </div>
-      <div class="curtain l"></div><div class="curtain r"></div>
-      <div id="fairy-lights"></div>
-
-      <img class="prop" id="p-shelf" src="assets/props/shelf.png" alt="قفسه">
-      <img class="prop" id="p-books" src="assets/props/books.png" alt="کتاب‌ها">
-      <img class="prop" id="p-plant" src="assets/props/plant.png" alt="گلدان">
-
-      <div class="prop" id="p-clock" title="ساعت">
-        <img class="clock-face" src="assets/props/clock-face.png" alt="">
-        <img class="clock-hand" id="clock-hour" src="assets/props/clock-hand-hour.png" alt="">
-        <img class="clock-hand" id="clock-minute" src="assets/props/clock-hand-minute.png" alt="">
-      </div>
-      <img class="prop" id="p-poster" src="assets/props/poster.png" alt="پوستر">
-      <img class="prop" id="p-lamp" src="assets/props/lamp-off.png" alt="چراغ">
-      <img class="prop" id="p-plush" src="assets/props/plush-bunny.png" alt="عروسک">
-      <img class="prop" id="p-ball" src="assets/props/ball.png" alt="توپ">
-      <img class="prop" id="p-musicbox" src="assets/props/music-box-closed.png" alt="جعبه موزیک">
-      <img class="prop" id="p-bowl" src="assets/props/bowl-empty.png" alt="کاسه غذا">
-      <img class="prop" id="p-diary" src="assets/props/diary.png" alt="دفتر خاطرات">
-      <img id="falling-book" src="assets/props/books.png" alt="">
-
-      <canvas id="charCanvas" width="390" height="600"></canvas>
-      <div id="sleep-veil"></div>
-      <div id="sleep-z"><span>Z</span><span>Z</span><span>Z</span></div>
-      <div id="droplets"></div>
-      <div id="hearts"></div>
-
-      <div class="hud">
-        <div class="pill"><img src="assets/icons/star-pink.png" alt=""> آستولفو <span id="stage-pill" style="color:var(--muted);font-weight:400">· مرحله ۱</span></div>
-        <div class="pill">روز <span class="px-num" id="day-val">1</span></div>
-        <div class="pill"><img class="coin-ic" src="assets/icons/coin.png" alt=""> <span class="px-num" id="coins-val">20</span></div>
-        <button id="gear-btn" title="تنظیمات"><img src="assets/icons/gear.png" alt="تنظیمات"></button>
-      </div>
-      <div class="rings">
-        <div class="ring-cluster" id="rings-right">
-          <div class="ring" data-meter="energy"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#F2B705" stroke-dasharray="97.4" stroke-dashoffset="19.5" stroke-linecap="round"/></svg><img src="assets/icons/bolt.png" alt="انرژی"></div>
-          <div class="ring" data-meter="cleanliness"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#7FB8D8" stroke-dasharray="97.4" stroke-dashoffset="19.5" stroke-linecap="round"/></svg><img src="assets/icons/duck.png" alt="تمیزی"></div>
-          <div class="ring" data-meter="affection"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#E85D8A" stroke-dasharray="97.4" stroke-dashoffset="77.9" stroke-linecap="round"/></svg><img src="assets/icons/heart.png" alt="محبت"></div>
-        </div>
-        <div class="ring-cluster" id="rings-left">
-          <div class="ring" data-meter="hunger"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#E8913A" stroke-dasharray="97.4" stroke-dashoffset="63.3" stroke-linecap="round"/></svg><img src="assets/icons/drumstick.png" alt="گرسنگی"></div>
-          <div class="ring" data-meter="happiness"><svg viewBox="0 0 36 36"><circle class="ring-bg" cx="18" cy="18" r="15.5"/><circle class="ring-fg" cx="18" cy="18" r="15.5" stroke="#F27EA9" stroke-dasharray="97.4" stroke-dashoffset="19.5" stroke-linecap="round"/></svg><img src="assets/icons/face-happy.png" alt="شادی"></div>
-        </div>
-      </div>
-      <div class="rail">
-        <button id="rail-shop" title="فروشگاه"><img src="assets/icons/bag.png" alt="فروشگاه"></button>
-        <button id="rail-quests" title="ماموریت‌ها"><img src="assets/icons/trophy.png" alt="ماموریت‌ها"></button>
-        <button id="rail-diary" title="دفتر خاطرات"><img src="assets/icons/bookshelf.png" alt="دفتر خاطرات"></button>
-      </div>
-      <div id="bubble"></div>
-    </div>
-  </div>
-
-  <div class="dock">
-    <button id="dock-feed"><span class="dock-ic"><img src="assets/icons/meal.png" alt=""></span><span>غذا</span></button>
-    <button id="dock-play"><span class="dock-ic"><img src="assets/icons/gamepad.png" alt=""></span><span>بازی</span></button>
-    <button id="dock-wash"><span class="dock-ic"><img src="assets/icons/duck.png" alt=""></span><span>حموم</span></button>
-    <button id="dock-sleep"><span class="dock-ic"><img src="assets/icons/moon.png" alt=""></span><span>خواب</span></button>
-    <button id="dock-praise"><span class="dock-ic"><img src="assets/icons/heart.png" alt=""></span><span>ناز</span></button>
-  </div>
-
-  <div class="chat-row">
-    <button class="mic-btn" id="mic-btn" title="صدا"><img src="assets/icons/speaker.png" alt=""></button>
-    <input id="chat-input" type="text" placeholder="به آستولفو چیزی بگو…" autocomplete="off">
-    <button class="send-btn" id="chat-send" title="ارسال"><svg viewBox="0 0 24 24" fill="none" shape-rendering="crispEdges"><path d="M3 11 L21 3 L14 21 L11 13 Z" fill="#fff"/><path d="M11 13 L21 3" stroke="#F27EA9" stroke-width="1.6"/></svg></button>
-    <div class="quiet-pill">آستولفو خوابه…</div>
-    <button class="wake-pill" id="wake-btn">بیدارش کن</button>
-  </div>
-
-  <div class="today-strip" id="today-strip">
-    <img src="assets/icons/bookshelf.png" alt="">
-    <span id="today-text">روز ۱ — آستولفو تازه به اتاقش اومده!</span>
-    <span class="streak" id="streak-text"></span>
-  </div>
-
-  <div class="sheet-backdrop" id="sheetBackdrop"></div>
-  <div class="sheet" id="sheet" role="dialog" aria-modal="true">
-    <div class="handle"></div>
-    <header>
-      <h2 id="sheet-title">فروشگاه</h2>
-      <div class="pill coin-pill" id="sheet-coins"><img class="coin-ic" src="assets/icons/coin.png" alt="" style="width:16px;height:16px"> <span class="px-num" id="sheet-coins-val">20</span></div>
-      <button class="x-btn" id="sheet-x" title="بستن"><img src="assets/icons/x.png" alt="بستن"></button>
-    </header>
-    <div class="sheet-body" id="sheet-body">
-
-      <div class="sheet-panel" id="panel-shop">
-        <div class="chips" id="shop-chips"></div>
-        <div class="shop-grid" id="shop-grid"></div>
-      </div>
-
-      <div class="sheet-panel" id="panel-games">
-        <div id="games-list"></div>
-        <div class="sheet-foot" id="games-leaderboard"><img src="assets/icons/trophy.png" alt=""> جدول امتیازها</div>
-      </div>
-
-      <div class="sheet-panel" id="panel-quests"><div id="quests-list"></div></div>
-      <div class="sheet-panel" id="panel-diary"><div id="diary-list"></div></div>
-      <div class="sheet-panel" id="panel-leaderboard"><div id="leaderboard-list"></div></div>
-
-      <div class="sheet-panel" id="panel-food"><div class="food-grid" id="food-grid"></div></div>
-
-      <div class="sheet-panel" id="panel-settings">
-        <div class="s-row"><span>صدا</span><button class="tog on" id="set-mute" aria-label="صدا"></button></div>
-        <div class="s-row"><span>حرکت کمتر</span><button class="tog" id="set-motion" aria-label="حرکت کمتر"></button></div>
-        <div class="s-row"><span>شب / روز اتاق</span><select id="set-daynight"><option value="auto">خودکار (ساعت تهران)</option><option value="day">روز</option><option value="night">شب</option></select></div>
-        <div class="s-row"><span>پشتیبان (JSON)</span><span><button class="mini-btn" id="btn-export">دانلود</button> <button class="mini-btn" id="btn-import" style="background:rgba(74,59,71,.12);color:var(--ink)">بازگردانی</button><input type="file" id="import-file" accept="application/json" style="display:none"></span></div>
-        <div class="s-row"><span>شروع دوباره</span><button class="mini-btn" id="btn-reset" style="background:rgba(74,59,71,.12);color:var(--ink)">ریست</button></div>
-        <button id="install-btn">نصب روی صفحه‌ی اصلی</button>
-      </div>
-
-      <div class="sheet-panel" id="panel-star">
-        <div class="play-area">
-          <div class="status" id="star-status"></div>
-          <canvas id="star-canvas" width="340" height="250"></canvas>
-          <div class="row"><span class="pill">امتیاز <span class="px-num" id="star-score">0</span></span><span class="pill">زمان <span class="px-num" id="star-time">30</span></span></div>
-          <div class="row"><button id="star-start">شروع</button><button class="ghost" id="star-quit">خروج</button></div>
-        </div>
-      </div>
-
-      <div class="sheet-panel" id="panel-memory">
-        <div class="play-area">
-          <div class="status" id="memory-status"></div>
-          <div class="memory-grid" id="memory-grid"></div>
-          <div class="row"><span class="pill">حرکت <span class="px-num" id="memory-moves">0</span></span><button class="ghost" id="memory-quit">خروج</button></div>
-        </div>
-      </div>
-
-      <div class="sheet-panel" id="panel-timing">
-        <div class="play-area">
-          <div class="status" id="timing-status"></div>
-          <div class="timing-track"><div class="timing-zone" id="timing-zone"></div><div class="timing-marker" id="timing-marker" style="left:0%"></div></div>
-          <div class="row"><span class="pill">دور <span class="px-num" id="timing-round">0/10</span></span><span class="pill">امتیاز <span class="px-num" id="timing-score">0</span></span></div>
-          <div class="row"><button id="timing-tap">بزن!</button><button class="ghost" id="timing-quit">خروج</button></div>
-        </div>
-      </div>
-
-      <div class="sheet-panel" id="panel-hideseek">
-        <div class="play-area">
-          <div class="status" id="hideseek-status"></div>
-          <p style="font-size:14px;color:var(--muted)">آستولفو قایم شده! توی اتاق دنبالش بگرد — فقط ۲ شانس داری.</p>
-          <div class="hide-spots">
-            <button data-spot="curtain">پشت پرده‌ی پنجره</button>
-            <button data-spot="shelf">پشت قفسه‌ی کتاب</button>
-            <button data-spot="rug">زیر قالیچه</button>
-          </div>
-          <div class="row"><button class="ghost" id="hideseek-quit">خروج</button></div>
-        </div>
-      </div>
-
-    </div>
-    <div class="chat-sheet-input" id="chat-sheet-input" style="display:none">
-      <input id="chat-input-sheet" type="text" placeholder="به آستولفو چیزی بگو…" autocomplete="off">
-      <button id="chat-send-sheet" title="ارسال"><svg viewBox="0 0 24 24" fill="none" shape-rendering="crispEdges" style="width:22px;height:22px"><path d="M3 11 L21 3 L14 21 L11 13 Z" fill="#fff"/><path d="M11 13 L21 3" stroke="#F27EA9" stroke-width="1.6"/></svg></button>
-    </div>
-  </div>
-
-  <div id="toast"></div>
+<div id="st">loading…</div>
+<div id="loadbar"></div>
+<div id="loadmsg">در حال بارگذاری…</div>
+<img id="poster" src="poster.png" alt="" fetchpriority="high">
+<div id="stage"></div>
+<header><h1>بزودی در این سایت <span class="fem">فمبوی</span> نصب می گردد.</h1></header>
+<div id="hint">برای ناز کردن، سرش رو لمس کن &nbsp;·&nbsp; برای چرخوندن بکشید</div>
+<div id="ui">
+  <button data-clip="Idle" class="on" disabled>وایسا</button>
+  <button data-clip="Sit" disabled>بشین</button>
+  <button data-clip="Pet" disabled>♥ نازش کن</button>
 </div>
-
-<script src="lines.js"></script>
-<script src="items-data.js"></script>
-<!-- PIXEL MESH RIG v4 (2026-11-27): REVERTED from the vector rig — the owner
-     rejected the style change outright («چرا کرکتر رو کلا عوض کردی»). The
-     ORIGINAL pixel character is back, driven by the skeletal mesh rig
-     (mesh-data.js + rig.js). ?v=4 cache-busts the phone so the vector
-     build can never be served again. -->
-<script src="mesh-data.js?v=4"></script>
-<script src="rig.js?v=4"></script>
-<script src="game.js"></script>
-<script src="chat.js"></script>
-<script>
-  window.addEventListener('load', function () {
-    if (window.Game) window.Game.init();
-    if (window.Chat) window.Chat.init();
+<div id="hearts"></div>
+<footer>مدل سه‌بعدی: Low Poly Saber Astolfo — Crashsune · ساخته‌شده با Three.js</footer>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const st=document.getElementById('st');
+const bar=document.getElementById('loadbar');
+const loadmsg=document.getElementById('loadmsg');
+const poster=document.getElementById('poster');
+const q=new URLSearchParams(location.search);
+const az=parseFloat(q.get('az')||'0')*Math.PI/180;
+const startClip=q.get('clip')||'Idle';
+const noui=q.get('noui')==='1';
+if(noui){ document.getElementById('ui').style.display='none'; document.querySelector('header').style.display='none'; document.getElementById('hint').style.display='none'; document.querySelector('footer').style.display='none'; }
+const stage=document.getElementById('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.0;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xf6d7e3);
+const camera=new THREE.PerspectiveCamera(35,1,0.1,100);
+const controls=new OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.dampingFactor=0.08; controls.enablePan=false;
+controls.minDistance=1.8; controls.maxDistance=5;
+controls.minPolarAngle=Math.PI*0.15; controls.maxPolarAngle=Math.PI*0.55;
+controls.autoRotate=(q.get('spin')!=='0'); controls.autoRotateSpeed=0.7;
+let resumeT=null;
+controls.addEventListener('start',()=>{controls.autoRotate=false;clearTimeout(resumeT);});
+controls.addEventListener('end',()=>{resumeT=setTimeout(()=>controls.autoRotate=true,3000);});
+scene.add(new THREE.HemisphereLight(0xffffff,0xe8a0b8,1.6));
+const sun=new THREE.DirectionalLight(0xffffff,2.2); sun.position.set(2,3,2); scene.add(sun);
+const sun2=new THREE.DirectionalLight(0xffd9e8,1.0); sun2.position.set(-2,3,2); scene.add(sun2);
+// soft contact shadow disc
+const _cv=document.createElement('canvas'); _cv.width=_cv.height=256;
+const _g=_cv.getContext('2d'); const _gr=_g.createRadialGradient(128,128,10,128,128,120);
+_gr.addColorStop(0,'rgba(120,40,70,0.35)'); _gr.addColorStop(1,'rgba(120,40,70,0)');
+_g.fillStyle=_gr; _g.fillRect(0,0,256,256);
+const ground=new THREE.Mesh(new THREE.CircleGeometry(0.6,32), new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(_cv),transparent:true,depthWrite:false}));
+ground.rotation.x=-Math.PI/2; ground.position.y=0.002; scene.add(ground);
+const heartsBox=document.getElementById('hearts');
+function spawnHeart(x,y){
+  if(heartsBox.childElementCount>14) return;
+  const sp=document.createElement('span'); sp.textContent='♥';
+  sp.style.left=(x+(Math.random()*40-20))+'px'; sp.style.top=y+'px';
+  heartsBox.appendChild(sp); setTimeout(()=>sp.remove(),1300);
+}
+function setActiveButton(name){
+  document.querySelectorAll('#ui button').forEach(b=>b.classList.toggle('on', b.dataset.clip===name));
+}
+function enableButtons(){ document.querySelectorAll('#ui button').forEach(b=>b.disabled=false); }
+let mixer=null, actions={}, current=null, base='Idle', petReturn=null, headBone=null;
+function playLoop(name, dur=0.5){
+  const next=actions[name]; if(!next||next===current) return;
+  next.reset().fadeIn(dur).play();
+  if(current) current.fadeOut(dur);
+  current=next; base=name; setActiveButton(name);
+}
+function headScreenPos(){
+  if(!headBone) return null;
+  const v=headBone.getWorldPosition(new THREE.Vector3()); v.project(camera);
+  const r=renderer.domElement.getBoundingClientRect();
+  return {x:(v.x*0.5+0.5)*r.width, y:(-v.y*0.5+0.5)*r.height, behind:v.z>1};
+}
+function playPet(){
+  if(!actions.Pet||current===actions.Pet) return;
+  petReturn=base;
+  const pet=actions.Pet;
+  pet.reset().fadeIn(0.25).play();
+  if(current) current.fadeOut(0.25);
+  current=pet; setActiveButton('Pet');
+  const hp=headScreenPos(); if(hp&&!hp.behind){ for(let i=0;i<4;i++) setTimeout(()=>spawnHeart(hp.x,hp.y-30), i*150); }
+}
+function fitCamera(){
+  renderer.setSize(innerWidth,innerHeight);
+  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener('resize',()=>{ fitCamera(); });
+const manager=new THREE.LoadingManager();
+manager.onProgress=(_u,loaded,total)=>{ bar.style.width=(100*loaded/total)+'%'; };
+manager.onError=()=>{ loadmsg.textContent='بارگذاری مدل ناموفق بود — لطفا صفحه را تازه کنید.'; };
+const loader=new GLTFLoader(manager);
+loader.load('astolfo_animated.glb', g=>{
+  const m=g.scene; scene.add(m);
+  m.traverse(o=>{ if(o.isMesh){ o.castShadow=false; o.receiveShadow=false; } });
+  scene.updateMatrixWorld(true);
+  const box=new THREE.Box3();
+  m.traverse(o=>{ if(o.isSkinnedMesh){ o.skeleton.update(); o.computeBoundingBox(); box.union(o.boundingBox.clone().applyMatrix4(o.matrixWorld)); } });
+  if(!box.isEmpty()){ m.position.y-=box.min.y; scene.updateMatrixWorld(true); }
+  const box2=new THREE.Box3();
+  m.traverse(o=>{ if(o.isSkinnedMesh){ o.computeBoundingBox(); box2.union(o.boundingBox.clone().applyMatrix4(o.matrixWorld)); } });
+  if(box2.isEmpty()) box2.setFromObject(m);
+  const ctr=box2.getCenter(new THREE.Vector3()); ctr.x-=0.15; const size=box2.getSize(new THREE.Vector3());
+  const maxDim=Math.max(size.x,size.y,size.z);
+  let dist=maxDim*2.8;
+  fitCamera();
+  if(camera.aspect<1) dist*=1.25;
+  const dir=new THREE.Vector3(Math.sin(az),0.18,Math.cos(az)).normalize();
+  camera.position.copy(ctr).addScaledVector(dir,dist);
+  controls.target.copy(ctr); controls.update();
+  mixer=new THREE.AnimationMixer(m);
+  for(const clip of g.animations){
+    if(clip.name==='rigAction') continue;
+    actions[clip.name]=mixer.clipAction(clip);
+  }
+  actions.Pet.setLoop(THREE.LoopOnce,1); actions.Pet.clampWhenFinished=true;
+  mixer.addEventListener('finished', e=>{ if(e.action===actions.Pet) playLoop(petReturn||'Idle',0.4); });
+  m.traverse(o=>{ if(o.isBone && /head$/i.test(o.name)) headBone=o; });
+  const headHit=new THREE.Mesh(new THREE.SphereGeometry(0.24,8,8), new THREE.MeshBasicMaterial({visible:false}));
+  (headBone||m).add(headHit);
+  const ray=new THREE.Raycaster(), ptr=new THREE.Vector2();
+  let downX=0, downY=0, downT=0;
+  renderer.domElement.addEventListener('pointerdown', e=>{ downX=e.clientX; downY=e.clientY; downT=performance.now(); controls.autoRotate=false; });
+  renderer.domElement.addEventListener('pointerup', e=>{
+    const moved=Math.hypot(e.clientX-downX, e.clientY-downY);
+    if(moved>7 || performance.now()-downT>400) return;
+    const rect=renderer.domElement.getBoundingClientRect();
+    ptr.set(((e.clientX-rect.left)/rect.width)*2-1, -((e.clientY-rect.top)/rect.height)*2+1);
+    ray.setFromCamera(ptr, camera);
+    if(ray.intersectObject(headHit,false).length) playPet();
   });
+  document.querySelectorAll('#ui button').forEach(btn=>btn.addEventListener('click', ()=>{
+    const name=btn.dataset.clip;
+    if(name==='Pet') playPet(); else playLoop(name, name==='Sit'?0.6:0.4);
+  }));
+  playLoop('Idle',0);
+  renderer.domElement.classList.add('ready');
+  poster.classList.add('gone');
+  loadmsg.style.display='none';
+  bar.style.display='none';
+  enableButtons();
+  st.textContent='OK clips='+Object.keys(actions).join(',');
+  document.title='LOADED';
+  if(startClip==='Sit'){ setTimeout(()=>{ playLoop('Sit',0.6); setTimeout(()=>{ st.textContent='OK sit'; }, 900); }, 300); }
+  else if(startClip==='Pet'){ setTimeout(()=>{ playPet(); setTimeout(()=>{ st.textContent='OK pet'; }, 650); }, 300); }
+}, undefined, e=>{ st.textContent='ERR '+(e.message||e); loadmsg.textContent='بارگذاری مدل ناموفق بود.'; });
+const clock=new THREE.Clock();
+(function loop(){
+  requestAnimationFrame(loop);
+  const dt=Math.min(clock.getDelta(),0.05);
+  if(mixer) mixer.update(dt);
+  controls.update(); renderer.render(scene,camera);
+})();
 </script>
 </body>
 </html>
