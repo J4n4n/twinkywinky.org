@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  const STORAGE_KEY = 'twinkywinky_astolfo_v2';
-  const LEGACY_KEYS = ['twinkywinky_anime_v1', 'twinkywinky_state', 'twinkywinky_v1', 'astolfo_state'];
+  const STORAGE_KEY = 'twinkywinky_astolfo_v3';
+  const LEGACY_KEYS = ['twinkywinky_astolfo_v2', 'twinkywinky_anime_v1', 'twinkywinky_state', 'twinkywinky_v1', 'astolfo_state'];
 
   const SPRITE_BASES = {
     idle:     'assets/char-idle',
@@ -12,7 +12,8 @@
     sit:      'assets/char-sit',
     sitBlink: 'assets/char-sit-blink',
     sitHappy: 'assets/char-sit-happy',
-    sleep:    'assets/char-sleep',
+    sleep:    'assets/char-sleep',      // اسپرایت مستقل درازکش (3:2)
+    sleepSit: 'assets/char-sleep-sit',  // پشتیبان در صورت نبودن char-sleep
   };
 
   // ---------------- موتور صوتی داخلی (Web Audio API) ----------------
@@ -44,6 +45,7 @@
       osc.stop(t + dur + 0.02);
     }
     pet()   { this.tone(680, 0.11, 'sine', 0.08, 0); this.tone(920, 0.16, 'triangle', 0.08, 0.07); }
+    giggle(){ this.tone(740, 0.09, 'sine', 0.07, 0); this.tone(988, 0.11, 'sine', 0.07, 0.07); this.tone(1174, 0.14, 'triangle', 0.06, 0.14); }
     pop()   { this.tone(540, 0.08, 'sine', 0.06); }
     sit()   { this.tone(430, 0.10, 'sine', 0.07, 0); this.tone(560, 0.12, 'sine', 0.06, 0.06); }
     sleep() { this.tone(392, 0.24, 'sine', 0.06, 0); this.tone(330, 0.34, 'sine', 0.05, 0.16); }
@@ -53,83 +55,140 @@
   }
   const sfx = new SoundFX();
 
-  // ---------------- استخر دیالوگ‌های اصیل آستولفو (Fate/Apocrypha) ----------------
+  // =========================================================================
+  // دیالوگ‌های اصیل آستولفو از Fate/Apocrypha (شاد، بازیگوش، معصوم، نیا~، بدون لحن حیوان خانگی!)
+  // =========================================================================
   const DIALOGUES = {
     greet: [
-      'یاهو! مستر بالاخره اومدی! داشتم نقشه می‌کشیدم از پنجره بپریم بریم ماجراجویی 🎀',
-      'سلام سلام! حوصله‌ی قوانین رسمی رو ندارم، بیا مستقیم بریم سراغ خوش‌گذرونی ✨',
-      'هی! ببین اتاق چقدر روشن و سرحاله! امروز چی تو سرمونه؟ ⭐',
+      'یاهو! رایدرِ سیاه، آستولفو، در خدمته! البته بی‌خیال رسمی‌بازی، بزن بریم یه کار باحال بکنیم 🎀✨',
+      'نیا~ بالاخره اومدی! نزدیک بود از بیکاری با هیپوگریف از پنجره بپرم بیرون ⭐',
+      'سلام سلام! من از قفس و قوانین خشک متنفرم، پس تا تو اینجایی قراره حسابی خوش بگذرونیم 💖',
+      'هی! داشتم فکر می‌کردم امروز چه غافلگیری‌ای برات رو کنم! آماده‌ای؟ 🎀',
     ],
+
+    // ۱. ناز کردن سر (چندین جمله‌ی متنوع و اصیل آستولفو)
     pet: [
-      'اوووه! چه دستای گرمی! بازم موهامو ناز کن، قول می‌دم تکون نخورم 💖',
-      'هی‌هی! اینجوری نازم می‌کنی دلم می‌خواد همین الان با هیپوگریف دور دنیا بپرم ✨',
-      'آخیش! از همه‌ی قصرها و تشریفات دنیا این ناز کردن تو بهتره 🎀',
-      'ایول! هر وقت پیش منی اصلاً حس قفس ندارم، حس پرواز دارم 💕',
+      'نیا~ چه دستای گرمی! همین‌جوری سرمو ناز کن، حسش از پرواز بین ابرا هم بهتره 💖',
+      'هی‌هی! من که حیوون خونگی نیستم، یکی از دوازده پالادین شارلمانی‌ام... ولی خب، بازم نازم کن خیلی حال می‌ده 🎀',
+      'یاهو! هر وقت این‌جوری سرمو نوازش می‌کنی کل استرس جنگ و قوانین خشک از یادم می‌ره ✨',
+      'اوووه! انقدر مهربونی که اگه بگی بریم تا اون سرِ دنیا، همین الان سوار هیپوگریف می‌شم 💕',
+      'هی‌هی، موهام بهم ریخت ولی اشکالی نداره! وقتی تو نازم می‌کنی همه‌چیز قشنگ‌تره 🌸',
     ],
-    sit: [
-      'آخیش! چهارزانو روی این فرش بشینیم و مثل دو تا ماجراجوی واقعی نقشه بکشیم 🎀',
-      'این فرش از زین هیپوگریف هم نرم‌تره! بیا بشینیم یه کم گپ بزنیم ✨',
-      'خب! پاهام استراحت کنن، ولی فکرم هنوز دنبال یه غافلگیری جدیده ⭐',
+
+    // ۲. لمس هر قسمت از بدن با لحن بازیگوش و معصوم آستولفو
+    touchHair: [
+      'اوه! بافت موهامو دوست داری؟ خودم هر روز با روبان صورتی می‌بندمشون، قشنگ شدن نه؟ 🎀',
+      'نیا~ مواظب سنجاق ستاره‌ایم باش! یادگاریِ روزهای خوش‌گذرونیه، کلی دوسش دارم ⭐',
+      'هی‌هی! اگه موهای صورتیمو بکشی قلقلکم می‌شه! تازه یه تار سفیدم قاطیش نیست، شانس آوردم ✨',
+      'می‌خوای خودت روبان موهامو ببندی؟ فقط محکم نبند ها، از هر چی شبیه قفس و بند باشه فراری‌ام 🎀',
     ],
-    stand: [
-      'بپریم بالا! استراحت بسه، وقت شیطنت و ماجراجوییه ⚡',
-      'پاشدم! بگو الان کجا بریم و چیکار کنیم؟ 🎀',
+    touchCheek: [
+      'هییی! لپمو نکش، شبیه موچی صورتی شدم نیا~ 😳💖',
+      'چیه؟ چیزی روی صورتم مونده یا فقط دلت می‌خواست سربه‌سرم بذاری؟ هی‌هی! ✨',
+      'اوووه! لپمو فشار دادی خنده‌م گرفت! حالا نوبت منه یه غافلگیری رو کنم 🎀',
+      'نیا~ این‌جوری نگام می‌کنی خجالتم می‌دی ها! ولی خب... بدم هم نمیاد 💕',
     ],
-    shelf: [
-      'اون شاخ طلاییِ کوچولو یادگاریِ «لا بلک لونا»ست! و اون کتاب پر از طلسم‌های فراموش‌شده‌ست... البته نصفشو یادم رفته 🎺📚',
-      'قفسه‌ی گنجینه‌هامه! کاکتوس کوچولو هم تازگی یه گل صورتی داده، خیلی به موهام میاد 🌵🌸',
-      'کتابای خشک و جدی رو گذاشتم ته‌ِ قفسه؛ جلوی قفسه فقط داستان‌های ماجراجویی و غافلگیریه!',
+    touchHand: [
+      'دستم رو گرفتی؟ یاهو! پس بزن بریم دنبال یه ماجراجویی غیرمنتظره ⭐',
+      'آستین شطرنجی‌ام باحاله نه؟ وقتی اینو می‌پوشم حس می‌کنم آماده‌ی مسابقه با رولانم 🏁',
+      'هی‌هی! دنبال اینی ببینی توی آستینم غافلگیری قایم کردم؟ شاید کرده باشم، شایدم نه~ 🎀',
+      'قول شوالیه‌گری می‌دم هر وقت دستم رو بگیری، تا آخر راه پشتت بمونم 💖',
     ],
-    clock: [
-      'ساعت واقعی رو ببین! ولی بین خودمون باشه، بهترین زمان همیشه «همین الان»ه ⏰✨',
-      'تیک‌تاک! عقربه‌ها می‌گن الان دقیقاً وقت خوراکی یا یه دست ستاره‌چینه!',
+    touchTorso: [
+      'نیا~ قلقلکم اومد! هودی‌ام رو تکون نده، الان بندش گره می‌خوره هی‌هی! ✨',
+      'این چوکر قلبی رو دیدی؟ به هودی سفیدم خیلی میاد، نه؟ عاشق چیزای کیوتم 🖤🎀',
+      'ببین چقدر راحتم تو این لباس! زرهِ سنگینِ پالادین‌ها رو گذاشتم کنار تا آزادِ آزاد باشم ⭐',
+      'اوه! می‌خوای بشماری چند تا راز پشت این هودی قایم شده؟ اولیش اینه که اصلاً یادم نیست کجا گذاشتمشون! هی‌هی~',
     ],
-    poster: [
-      'پوستر هیپوگریفم رو می‌بینی؟ توی آسمون هیچ‌کی به گرد پاش نمی‌رسه 🪽⭐',
-      'هر وقت دلم تنگ پرواز می‌شه به این پوستر نگاه می‌کنم!',
+    touchFeet: [
+      'این بوت‌های مشکی برای دویدن و پریدن روی زین هیپوگریف ساخته شدن! محکمن نه؟ 🪽',
+      'نیا~ مراقب جوراب خط‌صورتی‌ام باش! تازه پوشیدمش که با موهام ست بشه 🎀',
+      'هی‌هی! پاهامو قلقلک نده، الان وسط اتاق می‌پرم هوا ⭐',
+      'با همین بوت‌ها نصف اروپا رو گشتم! پایه‌ای دور بعدی رو با هم بریم؟ ✨',
     ],
-    plush: [
-      'این هیپوگریف کوچولوی پشمالومه! وقتی نمی‌تونیم بریم آسمون، همینجا کنارمه 🪽💖',
-      'هیپوگریف کوچولو می‌گه مستر خیلی مهربونه، بیا یه دور دیگه بازی کنیم!',
-    ],
-    trunk: [
-      'اوه! صندوقچه‌ی غافلگیری‌هامو پیدا کردی! بذار ببینم چی توش قایم کرده بودم... 🎁✨',
-      'اینجا پر از روبان، یادگاری سفرها و یه مشت سکه‌ی گمشده‌ست!',
-    ],
-    bowl: [
-      'به به! غذای خوب بهترین سوخت یه شوالیه‌ی ماجراجوئه 🍓✨',
-      'آخیش شکمم سیر شد! دستت درد نکنه، حالا انرژی‌م دو برابر شد 💖',
-    ],
-    windowNight: [
-      'هوا شب شد! ماه طلایی بیرون پنجره عجب نوری داره 🌙✨',
-      'شبای پرستاره بهترین وقت برای چرت زدن یا قصه گفتنه!',
-    ],
-    windowDay: [
-      'آفتاب زد توی اتاق! ابرا دارن از پشت پنجره رد می‌شن ☀️☁️',
-      'صبح بخیر! هوا انقدر قشنگه که نباید توی قفس موند 🎀',
-    ],
-    lampToggle: [
-      'نور گرم آباژور رو روشن کردم، حالا اتاق مثل یه مخفیگاه دنج شده ✨',
-      'آباژور رو کم کردم تا نور ماه و ستاره‌ها بیشتر به چشم بیان 🌙',
-    ],
+
+    // ۳. خوابیدن و بیدار شدن (چندین جمله‌ی مستقل + لمس حین خواب)
     sleepOn: [
-      'چشمام دیگه باز نمی‌مونه... همینجا چهارزانو یه چرت حسابی می‌زنم، شب بخیر 🌙💤',
-      'فقط یه چرت کوچولو می‌زنم تا فردا با انرژی کامل بریم ماجراجویی 💤',
+      'خوببب... دیگه پلکام سنگین شده نیا~ همین‌جا دراز می‌کشم یه چرت درست‌وحسابی بزنم، شب بخیر 🌙💤',
+      'یه شوالیه‌ی ماجراجو هم باید بخوابه تا فردا انرژی شیطنت داشته باشه! چراغ رو بذار روشن بمونه، شب بخیر ✨💤',
+      'آخیش... دراز کشیدن روی این فرش صورتی از تخت قصر هم راحت‌تره... می‌رم خوابِ پرواز ببینم 🌙',
+      'من رفتم دنیای خواب! اگه زیگ یا رولان سراغمو گرفتن بگو آستولفو رفته شارژ بشه 💤🎀',
     ],
     sleepOff: [
-      'یاهو! چه خوابی چسبید! کاملاً شارژ شدم، بزن بریم ☀️⚡',
-      'بیدار شدم! خواب دیدم داریم روی ابرا مسابقه می‌دیم 🎀',
+      'یاهو! صبح بخیر! چه خوابِ مشتی‌ای بود، حس می‌کنم می‌تونم تا ماه پرواز کنم ☀️🪽',
+      'نیا~ بیدار شدم! خواب دیدم داریم روی ابرا ستاره جمع می‌کنیم و رولان جا مونده! هی‌هی ⭐',
+      'پریدم بالا! انرژی‌م فول شد — خب رفیق، اولین غافلگیری امروز چیه؟ ⚡🎀',
+      'آخیش چه چرتی چسبید! دیگه بسه خوابیدن، بیرون کلی ماجرا منتظرمونه ☀️✨',
+    ],
+    sleepPoke: [
+      'آممم... پنج دقیقه‌ی دیگه... الان دارم از روی ابرا رد می‌شم... نیا~ 💤',
+      'ممم... لا بلک لونا رو... زیر بالشم... نذار... 🌙💤',
+      'هی‌هی... قلقلکم نده، اگه بیدارم کنی مجبوری برام کرپ بخری ها... 💤🍓',
+      'خور... پف... زیگ، هیپوگریف داره گاز می‌ده... 🪽💤',
+    ],
+
+    // نشستن و بلند شدن
+    sit: [
+      'آخیش! چهارزانو روی این فرش بشینیم و مثل دو تا رفیق صمیمی نقشه‌ی سفر بکشیم 🎀',
+      'بیا تو هم بشین! اینجا هیچ تشریفات و قانون خشکی نیست، راحتِ راحت باش ✨',
+      'چهارزانو نشستم که با دقت به حرفات گوش بدم! البته قول نمی‌دم پنج دقیقه دیگه یادم نره، هی‌هی~ ⭐',
+    ],
+    stand: [
+      'یاهو! پاشدم! نشستن زیادی حوصله‌مو سر می‌بره، وقت تکون خوردنه ⚡',
+      'بزن بریم! ایستادم که اگه یهو خواستی بریم ماجراجویی آماده باشم 🎀',
+    ],
+
+    // اشیای اتاق اختصاصی آستولفو
+    shelf: [
+      'اون شاخ طلایی روی قفسه «لا بلک لونا»ست! یه فوت توش بدم شیشه‌های کل شهر می‌لرزه 🎺✨',
+      'این کتاب بنفشِ روبان‌دار «کاسا دی لوگستیلا»ست! همه‌ی طلسم‌ها رو باطل می‌کنه... وایسا، اسمش واقعاً همین بود؟ آره همین بود، هی‌هی 📚',
+      'کاکتوس کوچولوم رو ببین! یه گل صورتی دقیقاً هم‌رنگ موهام داده، خیلی کیوته نه؟ 🌵🌸',
+    ],
+    clock: [
+      'عقربه‌ها واقعاً دارن می‌چرخن! ولی بین خودمون باشه، بهترین ساعت برای ماجراجویی همیشه «همین الان»ه ⏰✨',
+      'تیک‌تاک! هر ساعتی باشه وقتی با همیم اصلاً گذر زمان حس نمی‌شه 🎀',
+    ],
+    poster: [
+      'پوستر هیپوگریفم رو ببین! قشنگ‌ترین موجودِ افسانه‌ای دنیاست، توی آسمون هیچ‌کی به گردش نمی‌رسه 🪽⭐',
+      'به این پوستر نگاه می‌کنم یاد روزی می‌افتم که از قفس فرار کردیم و رفتیم تو آسمون! ✨',
+    ],
+    plush: [
+      'این هیپوگریف کوچولوی پشمالومه! یه پاپیون صورتی هم بستم گردنش که ستِ خودم بشه 🪽🎀',
+      'هیپوگریف کوچولو می‌گه امروز حتماً رکورد موردرد رو توی پرواز ستاره‌چین می‌زنی ⭐',
+    ],
+    trunk: [
+      'صندوقچه‌ی غافلگیری‌هامو پیدا کردی! کلی روبان، یادگاری و یه مشت سکه‌ی گمشده توشه 🎁✨',
+      'هر وقت یه چیز بامزه پیدا می‌کنم می‌ندازم تو این صندوقچه، بعدش یادم می‌ره و دوباره ذوق‌زده می‌شم! هی‌هی~ 🎀',
+    ],
+    bowl: [
+      'هی‌هی! این کاسه‌ی ستاره‌ایِ هیپوگریف کوچولومه، ولی خودم هم همیشه توت‌فرنگی‌هاشو کش می‌رم نیا~ 🍓🪽',
+      'به به! خوراکی خوب بهترین سوخت یه شوالیه‌ی آزاد و ماجراجوئه ✨🍰',
+      'مرسی رفیق! شکمم داشت قاروقور می‌کرد، حالا دوباره پرانرژی شدم 💖',
+    ],
+    windowNight: [
+      'واو! شب شد و ماهِ طلایی اومد پشت پنجره! ریسه‌ی ستاره‌هام تو شب محشر می‌شه 🌙✨',
+      'شبای پرستاره بهترین وقت برای قصه‌های عجیب‌غریب و چرت زدن روی فرشه 🌌',
+    ],
+    windowDay: [
+      'آفتاب زد توی اتاق! ابرا دارن پشت پنجره مسابقه می‌دن، بزن بریم بیرون ☀️☁️',
+      'نیا~ چه روز روشنی! هیچ‌کس نباید همچین روزی رو تو قفس بمونه 🎀',
+    ],
+    lampToggle: [
+      'آباژور رو روشن کردم! ببین چه نور طلاییِ گرمی افتاد روی فرش و هیپوگریف کوچولو ✨',
+      'آباژور رو خاموش کردم تا نور ماه و ستاره‌ها کل اتاق رو بگیره 🌙',
     ],
     hungryWarn: [
-      'مستر... شکمم داره قاروقور می‌کنه! یه خوراکی از کاسه یا فروشگاه برسون 🍓',
+      'رفیق... شکمم داره صدای شاخ لا بلک لونا درمیاره! یه کرپ یا توت‌فرنگی از گنجینه برسون 🍓',
+      'نیا~ گرسنه‌م شده! یه پالادینِ گرسنه چطوری بره ماجراجویی؟ 🍰',
     ],
     tiredWarn: [
-      'انرژی‌م ته کشیده... یه کم روی فرش چرت بزنم دوباره سرحال می‌شم 🌙',
+      'انرژی‌م داره تموم می‌شه... بذار یه کم روی فرش دراز بکشم و چرت بزنم 🌙💤',
     ],
     idle: [
-      'راستی، روی صندوقچه‌ی پایین سمت چپ زدی؟ گاهی توش سکه پیدا می‌شه 🎁',
-      'اگه حوصلت سر رفته بیا توی ستاره‌چین رکورد رولان و موردرد رو بزنیم ⭐',
-      'بگو ببینم امروز چه غافلگیری‌ای برام داری؟ 💬',
+      'هی! می‌دونستی اگه روی لپم، موهام، دستم یا بوت‌هام بزنی هر کدوم یه جواب جدا دارم؟ امتحان کن نیا~ 🎀',
+      'راستی! توی صندوقچه‌ی پایین سمت چپ گاهی سکه‌ی غافلگیری پیدا می‌شه 🎁🪙',
+      'حوصله‌م داره سر می‌ره! بیا یه دست «پرواز ستاره‌چین» بزنیم رکورد رولان رو بشکنیم ⭐',
+      'من هیچ‌وقت از حرف زدن با تو خسته نمی‌شم! یه چیزی برام بنویس ببینم چی تو سرته 💬✨',
     ],
   };
 
@@ -142,28 +201,28 @@
     return arr[poolMem[key].pop()];
   }
 
-  // ---------------- فروشگاه اختصاصی آستولفو (همه‌ی آیتم‌ها اثر واقعی دارند!) ----------------
+  // ---------------- فروشگاه گنجینه‌ی آستولفو (هر آیتم اثر واقعی دارد) ----------------
   const SHOP_ITEMS = [
-    { id: 'strawberry', cat: 'food',  ico: '🍓', title: 'توت‌فرنگی شکری',       desc: '+۲۵ سیری و +۱۰ صمیمیت',                      price: 15, effect: { hunger: 25, love: 10 } },
-    { id: 'crepe',      cat: 'food',  ico: '🍰', title: 'کرپ خامه‌ای پاریسی',    desc: '+۳۵ سیری، +۱۵ انرژی، +۸ صمیمیت',             price: 25, effect: { hunger: 35, energy: 15, love: 8 } },
-    { id: 'skewer',     cat: 'food',  ico: '🍖', title: 'سیخ کباب ماجراجو',      desc: '+۴۵ سیری و +۲۰ انرژی',                       price: 30, effect: { hunger: 45, energy: 20 } },
-    { id: 'boba',       cat: 'food',  ico: '🧋', title: 'شیرتوت ستاره‌ای',       desc: '+۳۵ انرژی و +۱۲ صمیمیت',                     price: 20, effect: { energy: 35, love: 12 } },
-    { id: 'crown',      cat: 'gear',  ico: '👑', title: 'تاج کوچولوی شوالیه',    desc: 'روی سر آستولفو قرار می‌گیره + ۵۰ امتیاز',     price: 45, effect: { love: 25, xp: 50 }, unique: true, equippable: true },
-    { id: 'ribbons',    cat: 'gear',  ico: '🎀', title: 'روبان جادویی صورتی',    desc: 'درخشش دور موها + هر ناز ۲ صمیمیت بیشتر',     price: 35, effect: { love: 20, xp: 40 }, unique: true, equippable: true },
-    { id: 'horn',       cat: 'decor', ico: '🎺', title: 'لا بلک لونا (شاخ طلایی)', desc: 'درخشش روی قفسه + ۳۰٪ سکه‌ی بیشتر در بازی',   price: 55, effect: { love: 20, xp: 60 }, unique: true, equippable: true },
-    { id: 'pillow',     cat: 'decor', ico: '☁️', title: 'بالشتک ابر جادویی',      desc: 'روی فرش قرار می‌گیره + احیای ۳برابری انرژی خواب', price: 40, effect: { energy: 25, xp: 45 }, unique: true, equippable: true },
-    { id: 'fairy',      cat: 'decor', ico: '✨', title: 'ریسه‌ی ستاره‌ای شب',    desc: 'چراغ‌های رنگی در شب + ۲۵٪ XP بیشتر',         price: 50, effect: { love: 20, xp: 55 }, unique: true, equippable: true },
+    { id: 'strawberry', cat: 'food',  ico: '🍓', title: 'توت‌فرنگی شکری',         desc: '+۲۵ خوراکی و +۱۰ رفاقت',                          price: 15, effect: { hunger: 25, love: 10 } },
+    { id: 'crepe',      cat: 'food',  ico: '🍰', title: 'کرپ خامه‌ای صورتی',      desc: '+۳۵ خوراکی، +۱۵ انرژی، +۸ رفاقت',                 price: 25, effect: { hunger: 35, energy: 15, love: 8 } },
+    { id: 'skewer',     cat: 'food',  ico: '🍖', title: 'کباب ضیافت پالادین',     desc: '+۴۵ خوراکی و +۲۰ انرژی',                          price: 30, effect: { hunger: 45, energy: 20 } },
+    { id: 'boba',       cat: 'food',  ico: '🧋', title: 'شیرتوت ستاره‌ای',        desc: '+۳۵ انرژی و +۱۲ رفاقت',                           price: 20, effect: { energy: 35, love: 12 } },
+    { id: 'crown',      cat: 'gear',  ico: '👑', title: 'تاج کوچولوی پالادین',    desc: 'روی سر آستولفو قرار می‌گیره + ۵۰ امتیاز',          price: 45, effect: { love: 25, xp: 50 }, unique: true, equippable: true },
+    { id: 'ribbons',    cat: 'gear',  ico: '🎀', title: 'روبان جادویی صورتی',     desc: 'درخشش دور موها + هر ناز ۲ رفاقت بیشتر',           price: 35, effect: { love: 20, xp: 40 }, unique: true, equippable: true },
+    { id: 'horn',       cat: 'decor', ico: '🎺', title: 'لا بلک لونا (درخشش)',    desc: 'هاله‌ی طلایی روی قفسه + ۳۰٪ سکه‌ی بیشتر در بازی', price: 55, effect: { love: 20, xp: 60 }, unique: true, equippable: true },
+    { id: 'pillow',     cat: 'decor', ico: '☁️', title: 'بالشتک ابر جادویی',      desc: 'روی فرش میاد + احیای دوونیم‌برابری انرژی در خواب', price: 40, effect: { energy: 25, xp: 45 }, unique: true, equippable: true },
+    { id: 'fairy',      cat: 'decor', ico: '✨', title: 'ریسه‌ی ستاره‌های شب',    desc: 'چراغ‌های رنگی در شب + ۲۵٪ امتیاز بیشتر',          price: 50, effect: { love: 20, xp: 55 }, unique: true, equippable: true },
   ];
 
-  // ---------------- وضعیت و مهاجرت خودکار از localStorage قدیمی ----------------
+  // ---------------- وضعیت با نگهداری اعشار دقیق (رفع قطعی باگ عدم کاهش آمار!) ----------------
   const defaultState = {
-    playerName: 'مستر',
+    playerName: 'رفیق',
     coins: 50,
     xp: 0,
     day: 1,
-    love: 78,
-    hunger: 82,
-    energy: 86,
+    love: 78.0,
+    hunger: 82.0,
+    energy: 86.0,
     pets: 0,
     bestScore: 0,
     sitting: false,
@@ -178,16 +237,19 @@
     sleepStartedAt: 0,
     sleepEnergyStart: 86,
     chatLog: [
-      { from: 'bot', text: 'یاهو! به اتاق ماجراجویی من خوش اومدی 🎀 سرمو ناز کن، روی فرش بزن تا چهارزانو بشینم، روی پنجره بزن تا شب بشه، یا همینجا باهام گپ بزن!' },
+      { from: 'bot', text: 'یاهو! من آستولفو‌ام، رایدرِ سیاه 🎀 بی‌خیال قوانین رسمی! سرم، موهام یا لپمو لمس کن، بزن رو فرش تا چهارزانو بشینم، یا همینجا باهام گپ بزن!' },
     ],
   };
 
+  function clampFloat(v, min = 0, max = 100) {
+    return Math.max(min, Math.min(max, v));
+  }
+
   function loadAndMigrateState() {
     try {
-      const current = localStorage.getItem(STORAGE_KEY);
-      if (current) return { ...defaultState, ...JSON.parse(current) };
+      const cur = localStorage.getItem(STORAGE_KEY);
+      if (cur) return { ...defaultState, ...JSON.parse(cur) };
 
-      // مهاجرت امن از نسخه‌های قبلی تا پیشرفت کاربر از بین نرود
       for (const oldKey of LEGACY_KEYS) {
         const raw = localStorage.getItem(oldKey);
         if (raw) {
@@ -203,6 +265,8 @@
             energy: Number.isFinite(old.energy) ? old.energy : defaultState.energy,
             pets: Number.isFinite(old.pets) ? old.pets : defaultState.pets,
             bestScore: Number.isFinite(old.bestScore) ? old.bestScore : defaultState.bestScore,
+            owned: Array.isArray(old.owned) ? old.owned : [],
+            equipped: Array.isArray(old.equipped) ? old.equipped : [],
             sound: typeof old.sound === 'boolean' ? old.sound : true,
             lastTickAt: Date.now(),
           };
@@ -225,24 +289,40 @@
     return Array.isArray(state.equipped) && state.equipped.includes(id);
   }
 
-  // ---------------- کاهش تدریجی واقعی آمار (آفلاین و آنلاین) ----------------
+  // ---------------- کاهش تدریجی واقعی آمار (بدون خطای رُند شدن! تضمینی داخل ۴۰ تا ۶۰ ثانیه) ----------------
   function applyStatDecay() {
     const now = Date.now();
-    const elapsedMin = Math.min(240, Math.max(0, (now - (state.lastTickAt || now)) / 60000));
-    if (elapsedMin < 0.45) return;
+    const elapsedSec = Math.min(14400, Math.max(0, (now - (state.lastTickAt || now)) / 1000));
+    if (elapsedSec < 5) return;
 
+    const elapsedMin = elapsedSec / 60;
     state.lastTickAt = now;
+
+    const prevH = Math.floor(state.hunger);
+    const prevE = Math.floor(state.energy);
+    const prevL = Math.floor(state.love);
+
     if (state.sleeping) {
-      const gainRate = hasEquipped('pillow') ? 4.5 : 2.0;
-      state.energy = clamp(state.energy + elapsedMin * gainRate);
-      state.hunger = clamp(state.hunger - elapsedMin * 0.35);
+      // هنگام خواب: انرژی برمی‌گردد (با بالشتک ۲.۵ برابر سریع‌تر)، اشتها خیلی آهسته کم می‌شود
+      const gainPerMin = hasEquipped('pillow') ? 10.0 : 4.0;
+      state.energy = clampFloat(state.energy + elapsedMin * gainPerMin);
+      state.hunger = clampFloat(state.hunger - elapsedMin * 0.45);
     } else {
-      state.hunger = clamp(state.hunger - elapsedMin * 0.9);
-      state.energy = clamp(state.energy - elapsedMin * 0.55);
-      state.love   = clamp(state.love   - elapsedMin * 0.4);
+      // هنگام بیداری: اشتها -1.5/دقیقه، انرژی -1.2/دقیقه، رفاقت -1.0/دقیقه
+      // در ۶۰ ثانیه: اشتها ۱ تا ۲ واحد، انرژی ۱ واحد و رفاقت ۱ واحد واقعاً کم می‌شود!
+      state.hunger = clampFloat(state.hunger - elapsedMin * 1.5);
+      state.energy = clampFloat(state.energy - elapsedMin * 1.2);
+      state.love   = clampFloat(state.love   - elapsedMin * 1.0);
     }
+
     saveState();
-    syncUI();
+    if (
+      Math.floor(state.hunger) !== prevH ||
+      Math.floor(state.energy) !== prevE ||
+      Math.floor(state.love) !== prevL
+    ) {
+      syncUI();
+    }
   }
 
   // ---------------- ارجاعات DOM ----------------
@@ -259,51 +339,34 @@
   const speechBubble = $('speech-bubble');
   const speechText = $('speech-text');
 
-  // ---------------- نقشه‌ی دقیق مختصات تصویر اتاق (پشتیبانی ۹:۱۶ جدید و ۲:۳ پشتیبان) ----------------
-  const ROOM_LAYOUT_9_16 = {
-    window: { u: 0.30, v: 0.11, w: 0.40, h: 0.19 },
-    clock:  { u: 0.08, v: 0.295, w: 0.195, h: 0.112 },
-    clockFace: { u: 0.115, v: 0.312, w: 0.122, h: 0.072 },
-    shelf:  { u: 0.05, v: 0.425, w: 0.28, h: 0.115 },
-    shelfAura: { u: 0.18, v: 0.43, w: 0.11, h: 0.07 },
-    poster: { u: 0.72, v: 0.28, w: 0.21, h: 0.14 },
-    lamp:   { u: 0.80, v: 0.46, w: 0.17, h: 0.27 },
-    lampGlow: { u: 0.68, v: 0.41, w: 0.36, h: 0.24 },
-    trunk:  { u: 0.04, v: 0.67, w: 0.21, h: 0.10 },
-    rug:    { u: 0.11, v: 0.73, w: 0.78, h: 0.20 },
-    rugPillow: { u: 0.33, v: 0.785, w: 0.34, h: 0.055 },
-    plush:  { u: 0.75, v: 0.69, w: 0.18, h: 0.12 },
-    bowl:   { u: 0.65, v: 0.765, w: 0.15, h: 0.07 },
-    charBottomV: 0.865,
-    charHeightV: 0.61,
+  // ---------------- نقشه‌ی پیکسلی دقیق اتاق ۱:۱٫۹۵ (اندازه‌گیری‌شده روی ۵۴۰×۱۰۵۲) ----------------
+  const ROOM_LAYOUT_TALL = {
+    window:    { u: 0.278, v: 0.181, w: 0.380, h: 0.157 },
+    clock:     { u: 0.030, v: 0.228, w: 0.205, h: 0.115 },
+    clockFace: { u: 0.055, v: 0.255, w: 0.154, h: 0.077 },
+    shelf:     { u: 0.015, v: 0.425, w: 0.365, h: 0.115 },
+    shelfAura: { u: 0.210, v: 0.435, w: 0.110, h: 0.065 },
+    poster:    { u: 0.770, v: 0.222, w: 0.210, h: 0.140 },
+    lamp:      { u: 0.810, v: 0.370, w: 0.180, h: 0.265 },
+    lampGlow:  { u: 0.680, v: 0.340, w: 0.360, h: 0.220 },
+    trunk:     { u: 0.020, v: 0.600, w: 0.240, h: 0.105 },
+    rug:       { u: 0.045, v: 0.685, w: 0.910, h: 0.230 },
+    rugPillow: { u: 0.340, v: 0.790, w: 0.320, h: 0.052 },
+    rugPillowSleep: { u: 0.140, v: 0.785, w: 0.240, h: 0.055 },
+    plush:     { u: 0.710, v: 0.640, w: 0.200, h: 0.130 },
+    bowl:      { u: 0.590, v: 0.710, w: 0.130, h: 0.060 },
+    charBottomV: 0.885,
+    charHeightV: 0.585,
   };
 
-  const ROOM_LAYOUT_2_3 = {
-    window: { u: 0.33, v: 0.08, w: 0.34, h: 0.22 },
-    clock:  { u: 0.07, v: 0.27, w: 0.17, h: 0.12 },
-    clockFace: { u: 0.095, v: 0.285, w: 0.115, h: 0.08 },
-    shelf:  { u: 0.04, v: 0.43, w: 0.24, h: 0.11 },
-    shelfAura: { u: 0.12, v: 0.43, w: 0.12, h: 0.07 },
-    poster: { u: 0.75, v: 0.26, w: 0.18, h: 0.15 },
-    lamp:   { u: 0.83, v: 0.42, w: 0.14, h: 0.34 },
-    lampGlow: { u: 0.72, v: 0.38, w: 0.34, h: 0.25 },
-    trunk:  { u: 0.02, v: 0.68, w: 0.18, h: 0.10 },
-    rug:    { u: 0.12, v: 0.74, w: 0.76, h: 0.19 },
-    rugPillow: { u: 0.34, v: 0.795, w: 0.32, h: 0.05 },
-    plush:  { u: 0.78, v: 0.68, w: 0.15, h: 0.12 },
-    bowl:   { u: 0.70, v: 0.76, w: 0.12, h: 0.06 },
-    charBottomV: 0.87,
-    charHeightV: 0.63,
-  };
-
-  // نگاشت دقیق مختصات تصویر واقعی (object-fit: cover; object-position: center bottom) به پیکسل‌های stage
+  // نگاشت تمام المان‌ها و ۶ ناحیه‌ی بدن آستولفو به پیکسل دقیق روی استیج
   function layoutRoomElements() {
     const sw = stageEl.clientWidth;
     const sh = stageEl.clientHeight;
     if (!sw || !sh) return;
 
-    const nw = bgDay.naturalWidth || 720;
-    const nh = bgDay.naturalHeight || 1280;
+    const nw = bgDay.naturalWidth || 540;
+    const nh = bgDay.naturalHeight || 1052;
     const imgRatio = nw / nh;
     const stageRatio = sw / sh;
 
@@ -312,15 +375,15 @@
       rw = sw;
       rh = sw / imgRatio;
       ox = 0;
-      oy = sh - rh; // object-position: bottom
+      oy = sh - rh;
     } else {
       rh = sh;
       rw = sh * imgRatio;
-      ox = (sw - rw) / 2; // object-position: center
+      ox = (sw - rw) / 2;
       oy = 0;
     }
 
-    const L = imgRatio > 0.62 ? ROOM_LAYOUT_2_3 : ROOM_LAYOUT_9_16;
+    const L = ROOM_LAYOUT_TALL;
     const place = (el, box) => {
       if (!el || !box) return;
       el.style.left   = `${ox + box.u * rw}px`;
@@ -329,46 +392,101 @@
       el.style.height = `${box.h * rh}px`;
     };
 
-    place($('hs-window'), L.window);
-    place($('window-fx'), L.window);
-    place($('hs-clock'),  L.clock);
+    const isSleep = state.sleeping;
+    const isLying = isSleep && isSleepSpriteLandscape();
+    const isSit   = state.sitting || (isSleep && !isLying);
+
+    place($('hs-window'),     L.window);
+    place($('window-fx'),     L.window);
+    place($('hs-clock'),      L.clock);
     place($('clock-overlay'), L.clockFace);
-    place($('hs-shelf'),  L.shelf);
-    place($('shelf-aura'), L.shelfAura);
-    place($('hs-poster'), L.poster);
-    place($('hs-lamp'),   L.lamp);
-    place($('lamp-glow'), L.lampGlow);
-    place($('hs-trunk'),  L.trunk);
-    place($('hs-rug'),    L.rug);
-    place($('rug-pillow'), L.rugPillow);
-    place($('hs-plush'),  L.plush);
-    place($('hs-bowl'),   L.bowl);
+    place($('hs-shelf'),      L.shelf);
+    place($('shelf-aura'),    L.shelfAura);
+    place($('hs-poster'),     L.poster);
+    place($('hs-lamp'),       L.lamp);
+    place($('lamp-glow'),     L.lampGlow);
+    place($('hs-trunk'),      L.trunk);
+    place($('hs-rug'),        L.rug);
+    place($('rug-pillow'),    isLying ? L.rugPillowSleep : L.rugPillow);
+    place($('hs-plush'),      L.plush);
+    place($('hs-bowl'),       L.bowl);
 
-    // قفل کردن قد و کف بوت کاراکتر دقیقاً روی مرکز فرش
-    const charBottomPx = sh - (oy + L.charBottomV * rh);
-    const charHeightPx = L.charHeightV * rh;
-    charWrap.style.bottom = `${charBottomPx}px`;
-    charWrap.style.height = `${charHeightPx}px`;
-    charShadow.style.bottom = `${charBottomPx + 4}px`;
+    // قرارگیری دقیق کاراکتر و ۶ ناحیه‌ی لمس بدن
+    const rugBottomY = oy + L.charBottomV * rh;
+    const charBottomPx = sh - rugBottomY;
 
-    // قفل کردن ناحیه‌ی لمس سر و حباب گفتگو نسبت به ارتفاع واقعی سر (ایستاده یا نشسته!)
-    const isSit = state.sitting || state.sleeping;
-    const charTopY = (oy + L.charBottomV * rh) - charHeightPx;
-    const headTopY = charTopY + (isSit ? charHeightPx * 0.30 : charHeightPx * 0.04);
-    const headHeightPx = charHeightPx * 0.25;
-    const headWidthPx = Math.min(sw * 0.38, charHeightPx * 0.34);
+    if (isLying) {
+      // حالت خوابیده‌ی درازکش روی فرش (نسبت افقی ۳:۲)
+      const sleepW = Math.min(sw * 0.78, rw * 0.78);
+      const sp = loadedSprites.sleep;
+      const sleepH = sp ? sleepW * (sp.height / sp.width) : sleepW * 0.66;
+      const sleepBottomPx = charBottomPx - 8;
 
-    const hsHead = $('hs-head');
-    hsHead.style.left   = `${(sw - headWidthPx) / 2}px`;
-    hsHead.style.top    = `${headTopY}px`;
-    hsHead.style.width  = `${headWidthPx}px`;
-    hsHead.style.height = `${headHeightPx}px`;
+      charWrap.style.width  = `${sleepW}px`;
+      charWrap.style.height = `${sleepH}px`;
+      charWrap.style.bottom = `${sleepBottomPx}px`;
+      charShadow.style.bottom = `${sleepBottomPx + 8}px`;
 
-    // ارتفاع پویا برای حباب گفتگو: هنگام نشستن پایین می‌آید و بالای سر می‌نشیند (هرگز ۱۶۰px معلق نمی‌ماند!)
-    const bubbleTop = isSit
-      ? Math.max(92, headTopY - 86)
-      : Math.max(88, Math.min(headTopY - 78, 108));
-    speechBubble.style.top = `${bubbleTop}px`;
+      const topY = sh - sleepBottomPx - sleepH;
+      const leftX = (sw - sleepW) / 2;
+
+      // مستطیل‌های کاملاً غیرهمپوشان (۰ پیکسل هم‌پوشانی و ۰ نشت گوشه به فرش)
+      setRect($('hs-hair-l'), leftX + sleepW * 0.00, topY + sleepH * 0.08, sleepW * 0.08, sleepH * 0.78);
+      setRect($('hs-head'),   leftX + sleepW * 0.08, topY + sleepH * 0.03, sleepW * 0.21, sleepH * 0.33);
+      setRect($('hs-cheek'),  leftX + sleepW * 0.08, topY + sleepH * 0.36, sleepW * 0.21, sleepH * 0.24);
+      setRect($('hs-hair-r'), leftX + sleepW * 0.29, topY + sleepH * 0.06, sleepW * 0.08, sleepH * 0.54);
+      setRect($('hs-hand-l'), leftX + sleepW * 0.08, topY + sleepH * 0.60, sleepW * 0.29, sleepH * 0.32);
+      setRect($('hs-hand-r'), leftX + sleepW * 0.37, topY + sleepH * 0.12, sleepW * 0.14, sleepH * 0.72);
+      setRect($('hs-torso'),  leftX + sleepW * 0.51, topY + sleepH * 0.12, sleepW * 0.18, sleepH * 0.74);
+      setRect($('hs-feet'),   leftX + sleepW * 0.69, topY + sleepH * 0.18, sleepW * 0.31, sleepH * 0.76);
+
+      speechBubble.style.top = `${Math.max(104, topY - 82)}px`;
+    } else {
+      // حالت ایستاده یا چهارزانو (هر دو ۵۶۰×۸۳۵ هم‌تراز از کف پا)
+      const charH = L.charHeightV * rh;
+      const charW = charH * (560 / 835);
+      charWrap.style.width  = `${charW}px`;
+      charWrap.style.height = `${charH}px`;
+      charWrap.style.bottom = `${charBottomPx}px`;
+      charShadow.style.bottom = `${charBottomPx + 4}px`;
+
+      const topY = rugBottomY - charH;
+      const leftX = (sw - charW) / 2;
+
+      if (isSit) {
+        // مستطیل‌های غیرهمپوشان منطبق بر سیلوت واقعی حالت چهارزانو
+        setRect($('hs-hair-l'), leftX + charW * 0.32, topY + charH * 0.33, charW * 0.08, charH * 0.20);
+        setRect($('hs-head'),   leftX + charW * 0.40, topY + charH * 0.31, charW * 0.20, charH * 0.11);
+        setRect($('hs-cheek'),  leftX + charW * 0.40, topY + charH * 0.42, charW * 0.20, charH * 0.11);
+        setRect($('hs-hair-r'), leftX + charW * 0.60, topY + charH * 0.33, charW * 0.08, charH * 0.20);
+        setRect($('hs-hand-l'), leftX + charW * 0.23, topY + charH * 0.53, charW * 0.14, charH * 0.26);
+        setRect($('hs-torso'),  leftX + charW * 0.37, topY + charH * 0.53, charW * 0.26, charH * 0.26);
+        setRect($('hs-hand-r'), leftX + charW * 0.63, topY + charH * 0.53, charW * 0.14, charH * 0.26);
+        setRect($('hs-feet'),   leftX + charW * 0.20, topY + charH * 0.79, charW * 0.60, charH * 0.20);
+
+        speechBubble.style.top = `${Math.max(100, topY + charH * 0.30 - 84)}px`;
+      } else {
+        // مستطیل‌های غیرهمپوشان منطبق بر سیلوت حالت ایستاده با دست‌های طبیعی (بدون نشت گوشه به پنجره)
+        setRect($('hs-hair-l'), leftX + charW * 0.32, topY + charH * 0.08, charW * 0.08, charH * 0.19);
+        setRect($('hs-head'),   leftX + charW * 0.40, topY + charH * 0.06, charW * 0.20, charH * 0.11);
+        setRect($('hs-cheek'),  leftX + charW * 0.40, topY + charH * 0.17, charW * 0.20, charH * 0.10);
+        setRect($('hs-hair-r'), leftX + charW * 0.60, topY + charH * 0.08, charW * 0.08, charH * 0.19);
+        setRect($('hs-hand-l'), leftX + charW * 0.26, topY + charH * 0.27, charW * 0.12, charH * 0.32);
+        setRect($('hs-torso'),  leftX + charW * 0.38, topY + charH * 0.27, charW * 0.24, charH * 0.32);
+        setRect($('hs-hand-r'), leftX + charW * 0.62, topY + charH * 0.27, charW * 0.12, charH * 0.32);
+        setRect($('hs-feet'),   leftX + charW * 0.36, topY + charH * 0.59, charW * 0.28, charH * 0.40);
+
+        speechBubble.style.top = `${Math.max(92, Math.min(topY + charH * 0.05 - 76, 114))}px`;
+      }
+    }
+  }
+
+  function setRect(el, x, y, w, h) {
+    if (!el) return;
+    el.style.left   = `${x}px`;
+    el.style.top    = `${y}px`;
+    el.style.width  = `${w}px`;
+    el.style.height = `${h}px`;
   }
 
   window.addEventListener('resize', layoutRoomElements);
@@ -386,9 +504,14 @@
   updateLiveClock();
   setInterval(updateLiveClock, 1000);
 
-  // ---------------- بارگذاری بهینه تصاویر + Preloader واقعی + نورپردازی شبانه روی کاراکتر ----------------
+  // ---------------- لودینگ تصاویر + حذف خودکار پس‌زمینه‌ی سبز (برای char-sleep.jpg) ----------------
   const loadedSprites = {};
   let activePose = 'idle';
+
+  function isSleepSpriteLandscape() {
+    const sp = loadedSprites.sleep;
+    return Boolean(sp && sp.width > sp.height);
+  }
 
   function processIfGreenScreen(img) {
     const c = document.createElement('canvas');
@@ -398,22 +521,23 @@
     ctx.drawImage(img, 0, 0);
     const d = ctx.getImageData(0, 0, c.width, c.height);
     const p = d.data;
-    // اگر از قبل PNG/WebP شفاف است، صفر پردازش اضافی!
     if (p[3] < 180) return c;
-    const isGreen = p[1] > 150 && p[1] > p[0] * 1.4 && p[1] > p[2] * 1.4;
+    const isGreen = p[1] > 145 && p[1] > p[0] * 1.35 && p[1] > p[2] * 1.35;
     if (!isGreen) return c;
 
     for (let i = 0; i < p.length; i += 4) {
       const r = p[i], g = p[i + 1], b = p[i + 2];
       const m = Math.max(r, b);
       const gr = g - m;
-      if (gr > 48 && g > 95) p[i + 3] = 0;
-      else if (gr > 12 && g > 55) {
-        p[i + 3] = Math.round(p[i + 3] * clamp(1 - (gr - 12) / 36, 0, 1));
-        p[i + 1] = m;
-      } else if (gr > 2) {
+      if (gr > 44 && g > 90) {
+        p[i + 3] = 0;
+      } else if (gr > 10 && g > 50) {
+        p[i + 3] = Math.round(p[i + 3] * clampFloat(1 - (gr - 10) / 34, 0, 1));
+        p[i + 1] = Math.min(g, Math.round(r * 0.55 + b * 0.45));
+      } else if (gr > 1) {
         p[i + 1] = m;
       }
+      if (p[i + 3] < 14) p[i + 3] = 0;
     }
     ctx.putImageData(d, 0, 0);
     return c;
@@ -439,32 +563,31 @@
     let done = 0;
     const tick = (msg) => {
       done += 1;
-      const pct = Math.min(100, Math.round((done / total) * 100));
-      $('preloader-bar').style.width = `${pct}%`;
+      $('preloader-bar').style.width = `${Math.min(100, Math.round((done / total) * 100))}%`;
       if (msg) $('preloader-text').textContent = msg;
     };
 
-    // اتاق روز و شب (با پشتیبانی خودکار webp/png/jpg)
-    const [dayImg, nightImg] = await Promise.all([
+    await Promise.all([
       loadImageWithFallback('assets/room-day').then((im) => {
         if (im) bgDay.src = im.src;
-        else bgDay.src = 'assets/room-day-fallback.webp';
-        tick('اتاق روز آماده شد ☀️');
-        return im;
+        tick('پنجره‌ی اتاق باز شد ☀️');
       }),
       loadImageWithFallback('assets/room-night').then((im) => {
         if (im) bgNight.src = im.src;
-        else bgNight.src = 'assets/room-night-fallback.webp';
-        tick('چراغ شب روشن شد 🌙');
-        return im;
+        tick('چراغ و ماه شب آماده شد 🌙');
       }),
     ]);
 
     await Promise.all(keys.map(async (key) => {
       const im = await loadImageWithFallback(SPRITE_BASES[key]);
       if (im) loadedSprites[key] = processIfGreenScreen(im);
-      tick('آستولفو داره میاد توی اتاق 🎀');
+      tick('آستولفو داره می‌پره توی اتاق 🎀');
     }));
+
+    // اگر کاربر هنوز char-sleep جدید رو نذاشته، از پشتیبان استفاده کن
+    if (!loadedSprites.sleep && loadedSprites.sleepSit) {
+      loadedSprites.sleep = loadedSprites.sleepSit;
+    }
 
     activePose = getBasePose();
     layoutRoomElements();
@@ -473,7 +596,7 @@
 
     setTimeout(() => {
       $('preloader').classList.add('done');
-      say(pick('greet'), 5200);
+      say(pick('greet'), 5400);
     }, 240);
   }
 
@@ -483,7 +606,6 @@
     return 'idle';
   }
 
-  // رندر کاراکتر + یکپارچه‌سازی نور شب (سایه‌ی یاسی + نور لبه‌ی گرم از سمت آباژور راست)
   function renderCharacter() {
     const sprite = loadedSprites[activePose] || loadedSprites[getBasePose()] || loadedSprites.idle;
     if (!sprite) return;
@@ -500,14 +622,12 @@
     if (state.night || state.sleeping) {
       charCtx.save();
       charCtx.globalCompositeOperation = 'source-atop';
-      // سایه‌ی آبی-یاسی شبانه تا کاراکتر مثل استیکر روشن روی دیوار تاریک نچسبد
-      charCtx.fillStyle = state.lampOn ? 'rgba(58, 66, 132, 0.24)' : 'rgba(32, 38, 92, 0.36)';
+      charCtx.fillStyle = state.lampOn ? 'rgba(56, 64, 130, 0.24)' : 'rgba(30, 36, 90, 0.36)';
       charCtx.fillRect(0, 0, charCanvas.width, charCanvas.height);
 
-      // نور گرم لبه‌ی راست از سمت آباژور روشن
       if (state.lampOn) {
-        const rim = charCtx.createLinearGradient(charCanvas.width * 0.92, 0, charCanvas.width * 0.25, 0);
-        rim.addColorStop(0, 'rgba(255, 206, 128, 0.32)');
+        const rim = charCtx.createLinearGradient(charCanvas.width * 0.94, 0, charCanvas.width * 0.25, 0);
+        rim.addColorStop(0, 'rgba(255, 206, 128, 0.34)');
         rim.addColorStop(0.45, 'rgba(255, 198, 120, 0.08)');
         rim.addColorStop(1, 'rgba(255, 198, 120, 0)');
         charCtx.fillStyle = rim;
@@ -523,8 +643,9 @@
     charWrap.classList.add('pop-react');
   }
 
-  // ---------------- پلک زدن و کج‌شدن سر (هم ایستاده و هم نشسته!) ----------------
+  // ---------------- پلک زدن، سر کج و حرف‌زدن خودجوش آستولفو ----------------
   let reactionLockUntil = 0;
+  let lastInteractionAt = Date.now();
 
   function setTempPose(pose, ms) {
     activePose = pose;
@@ -568,30 +689,33 @@
         }, 1800);
       }
       scheduleTilt();
-    }, 6800 + Math.random() * 5200);
+    }, 6500 + Math.random() * 5000);
   }
 
-  // چرخه‌ی زنده: افکت خواب + کاهش تدریجی آمار + دیالوگ‌های خودمونی
+  // افکت خواب + کاهش/احیای آمار هر ۱۰ ثانیه + گفتگوی خودجوش وقتی کاربر ساکت است
   setInterval(() => {
-    if (state.sleeping) {
-      spawnZzz();
-      const boost = hasEquipped('pillow') ? 6 : 2;
-      if (state.energy < 100) adjustStats({ energy: boost });
-    }
-  }, 2400);
+    if (state.sleeping) spawnZzz();
+  }, 2300);
 
-  setInterval(applyStatDecay, 30000);
+  setInterval(applyStatDecay, 10000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) applyStatDecay();
+  });
 
   setInterval(() => {
     if (state.sleeping) return;
-    if (state.hunger < 30) { say(pick('hungryWarn'), 5000); return; }
-    if (state.energy < 25) { say(pick('tiredWarn'), 5000); return; }
-    if (Math.random() < 0.30) say(pick('idle'), 4800);
-  }, 24000);
+    if (Date.now() - lastInteractionAt < 14000) return;
+    if (state.hunger < 30) { say(pick('hungryWarn'), 5200); return; }
+    if (state.energy < 25) { say(pick('tiredWarn'), 5200); return; }
+    if (Math.random() < 0.45) {
+      if (!state.sitting) setTempPose('tilt', 1600);
+      say(pick('idle'), 5000);
+    }
+  }, 18000);
 
   // ---------------- حباب گفتگو و ذرات ----------------
   let speechTimer = null;
-  function say(text, duration = 4600) {
+  function say(text, duration = 4800) {
     speechText.textContent = text;
     speechBubble.classList.remove('is-hidden');
     clearTimeout(speechTimer);
@@ -616,65 +740,68 @@
     const el = document.createElement('span');
     el.className = 'fx-zzz';
     el.textContent = 'Zzz';
-    el.style.left = `${45 + Math.random() * 10}%`;
-    el.style.top = '44%';
+    const lying = isSleepSpriteLandscape();
+    el.style.left = `${(lying ? 26 : 45) + Math.random() * 10}%`;
+    el.style.top  = lying ? '66%' : '45%';
     el.style.fontSize = `${14 + Math.random() * 8}px`;
     fxLayer.appendChild(el);
     setTimeout(() => el.remove(), 2700);
   }
 
   // ---------------- آمار و رابط کاربری ----------------
-  function clamp(v, min = 0, max = 100) {
-    return Math.max(min, Math.min(max, Math.round(v)));
-  }
-
   function adjustStats(delta) {
     const xpMult = hasEquipped('fairy') ? 1.25 : 1.0;
-    if (delta.love)   state.love   = clamp(state.love + delta.love);
-    if (delta.hunger) state.hunger = clamp(state.hunger + delta.hunger);
-    if (delta.energy) state.energy = clamp(state.energy + delta.energy);
-    if (delta.coins)  state.coins  = Math.max(0, state.coins + delta.coins);
+    if (delta.love)   state.love   = clampFloat(state.love + delta.love);
+    if (delta.hunger) state.hunger = clampFloat(state.hunger + delta.hunger);
+    if (delta.energy) state.energy = clampFloat(state.energy + delta.energy);
+    if (delta.coins)  state.coins  = Math.max(0, Math.round(state.coins + delta.coins));
     if (delta.xp)     state.xp    += Math.round(delta.xp * xpMult);
+    state.lastTickAt = Date.now();
     saveState();
     syncUI();
   }
 
   function syncUI() {
     const level = Math.floor(state.xp / 100) + 1;
+    const loveDisp   = Math.round(state.love);
+    const hungerDisp = Math.round(state.hunger);
+    const energyDisp = Math.round(state.energy);
+
     $('hud-level').textContent = `سطح ${level}`;
     $('hud-day').textContent   = `روز ${state.day}`;
     $('hud-coins').textContent = state.coins;
     $('shop-coins').textContent = state.coins;
 
-    $('bar-love').style.width   = `${state.love}%`;
-    $('bar-hunger').style.width = `${state.hunger}%`;
-    $('bar-energy').style.width = `${state.energy}%`;
-    $('val-love').textContent   = state.love;
-    $('val-hunger').textContent = state.hunger;
-    $('val-energy').textContent = state.energy;
+    $('bar-love').style.width   = `${loveDisp}%`;
+    $('bar-hunger').style.width = `${hungerDisp}%`;
+    $('bar-energy').style.width = `${energyDisp}%`;
+    $('val-love').textContent   = loveDisp;
+    $('val-hunger').textContent = hungerDisp;
+    $('val-energy').textContent = energyDisp;
 
-    $('bar-love').closest('.stat-chip').classList.toggle('low', state.love < 28);
-    $('bar-hunger').closest('.stat-chip').classList.toggle('low', state.hunger < 28);
-    $('bar-energy').closest('.stat-chip').classList.toggle('low', state.energy < 25);
+    $('bar-love').closest('.stat-chip').classList.toggle('low', loveDisp < 28);
+    $('bar-hunger').closest('.stat-chip').classList.toggle('low', hungerDisp < 28);
+    $('bar-energy').closest('.stat-chip').classList.toggle('low', energyDisp < 25);
 
     $('btn-sound').textContent = state.sound ? '🔊' : '🔇';
     $('act-sit').classList.toggle('active', state.sitting && !state.sleeping);
     $('sit-label').textContent = state.sitting ? 'بلند شو' : 'چهارزانو';
     $('act-sleep').classList.toggle('active', state.sleeping);
-    $('sleep-label').textContent = state.sleeping ? 'بیدار شو' : 'چرت زدن';
+    $('sleep-label').textContent = state.sleeping ? 'بیدار شو' : 'خوابیدن';
 
-    const isSit = state.sitting || state.sleeping;
+    const lying = state.sleeping && isSleepSpriteLandscape();
+    const isSitVisual = state.sitting || (state.sleeping && !lying);
     const isNight = state.night || state.sleeping;
 
-    appEl.classList.toggle('is-sitting', isSit);
+    appEl.classList.toggle('is-sitting', isSitVisual);
     appEl.classList.toggle('is-sleeping', state.sleeping);
+    appEl.classList.toggle('sleep-lying', lying);
     appEl.classList.toggle('is-night', isNight);
     appEl.classList.toggle('lamp-on', state.lampOn);
 
     bgDay.classList.toggle('active', !isNight);
     bgNight.classList.toggle('active', isNight);
 
-    // نمایش بصری آیتم‌های واقعیِ خریداری و نصب‌شده در اتاق و روی کاراکتر
     $('char-crown').classList.toggle('hidden', !hasEquipped('crown'));
     $('char-ribbons').classList.toggle('hidden', !hasEquipped('ribbons'));
     $('shelf-aura').classList.toggle('hidden', !hasEquipped('horn'));
@@ -685,28 +812,88 @@
     renderCharacter();
   }
 
-  // ---------------- اکشن‌های تعاملی اتاق و کاراکتر ----------------
-  function handlePetHead() {
+  // ---------------- تعامل با تک‌تک بخش‌های بدن آستولفو ----------------
+  function handleBodyTouch(zone) {
+    lastInteractionAt = Date.now();
     if (state.sleeping) {
       sfx.pop();
-      spawnParticles('💤', 50, 46, 2);
-      say('آممم... الان خوابم مستر، یواش نازم کن... 🌙');
-      adjustStats({ love: 3, xp: 4 });
+      spawnParticles('💤', isSleepSpriteLandscape() ? 32 : 50, isSleepSpriteLandscape() ? 70 : 48, 2);
+      say(pick('sleepPoke'), 4800);
+      adjustStats({ love: 1.5, xp: 3 });
       return;
     }
-    sfx.pet();
+
     popCharacter();
-    state.pets += 1;
-    const headY = state.sitting ? 48 : 30;
-    spawnParticles('💖', 50, headY, 5);
-    // حالا در حالت نشسته هم چهره‌ی خوشحال واقعی نمایش داده می‌شود!
-    setTempPose(state.sitting ? 'sitHappy' : 'happy', 1500);
-    const loveBonus = hasEquipped('ribbons') ? 8 : 6;
-    adjustStats({ love: loveBonus, coins: 2, xp: 10 });
-    say(pick('pet'));
+    const sit = state.sitting;
+
+    if (zone === 'head') {
+      sfx.pet();
+      state.pets += 1;
+      spawnParticles('💖', 50, sit ? 52 : 34, 5);
+      setTempPose(sit ? 'sitHappy' : 'happy', 1550);
+      adjustStats({ love: hasEquipped('ribbons') ? 8 : 6, coins: 2, xp: 10 });
+      say(pick('pet'), 5000);
+      return;
+    }
+
+    if (zone === 'hair') {
+      sfx.giggle();
+      spawnParticles('🎀', 50, sit ? 54 : 36, 4);
+      setTempPose(sit ? 'sitHappy' : 'tilt', 1500);
+      adjustStats({ love: 4, xp: 6 });
+      say(pick('touchHair'), 5000);
+      return;
+    }
+
+    if (zone === 'cheek') {
+      sfx.giggle();
+      spawnParticles('✨', 50, sit ? 56 : 38, 4);
+      setTempPose(sit ? 'sitHappy' : 'happy', 1450);
+      adjustStats({ love: 5, coins: 1, xp: 7 });
+      say(pick('touchCheek'), 5000);
+      return;
+    }
+
+    if (zone === 'hand') {
+      sfx.pop();
+      spawnParticles('⭐', 50, sit ? 64 : 52, 4);
+      setTempPose(sit ? 'sitHappy' : 'tilt', 1400);
+      adjustStats({ love: 4, xp: 6 });
+      say(pick('touchHand'), 5000);
+      return;
+    }
+
+    if (zone === 'torso') {
+      sfx.giggle();
+      spawnParticles('💖', 50, sit ? 64 : 48, 3);
+      setTempPose(sit ? 'sitHappy' : 'happy', 1300);
+      adjustStats({ love: 3, xp: 5 });
+      say(pick('touchTorso'), 5000);
+      return;
+    }
+
+    if (zone === 'feet') {
+      sfx.pop();
+      spawnParticles('🪽', 50, 78, 3);
+      if (!sit) setTempPose('tilt', 1300);
+      adjustStats({ love: 2, xp: 4 });
+      say(pick('touchFeet'), 5000);
+    }
   }
 
+  $('hs-head').addEventListener('click',   () => handleBodyTouch('head'));
+  $('act-pet').addEventListener('click',   () => handleBodyTouch('head'));
+  $('hs-hair-l').addEventListener('click', () => handleBodyTouch('hair'));
+  $('hs-hair-r').addEventListener('click', () => handleBodyTouch('hair'));
+  $('hs-cheek').addEventListener('click',  () => handleBodyTouch('cheek'));
+  $('hs-hand-l').addEventListener('click', () => handleBodyTouch('hand'));
+  $('hs-hand-r').addEventListener('click', () => handleBodyTouch('hand'));
+  $('hs-torso').addEventListener('click',  () => handleBodyTouch('torso'));
+  $('hs-feet').addEventListener('click',   () => handleBodyTouch('feet'));
+
+  // ---------------- نشستن و خوابیدن (با اسپرایت درازکش مستقل!) ----------------
   function handleToggleSit() {
+    lastInteractionAt = Date.now();
     if (state.sleeping) {
       wakeUpFromSleep(true);
       return;
@@ -717,28 +904,28 @@
     activePose = getBasePose();
     syncUI();
     saveState();
-    say(pick(state.sitting ? 'sit' : 'stand'));
+    say(pick(state.sitting ? 'sit' : 'stand'), 4800);
   }
 
   function wakeUpFromSleep(staySitting = false) {
     const sleptSec = (Date.now() - (state.sleepStartedAt || Date.now())) / 1000;
     const energyGained = state.energy - (state.sleepEnergyStart || state.energy);
-    // رفع باگ روزشمار: فقط وقتی واقعاً چرت زده باشد (حداقل ۱۵ ثانیه یا ۱۵+ انرژی) روز جلو می‌رود
     if (sleptSec >= 15 || energyGained >= 15) {
       state.day += 1;
     }
     state.sleeping = false;
     state.night = false;
     state.sitting = staySitting;
-    sfx.pet();
+    sfx.giggle();
     popCharacter();
     activePose = getBasePose();
     syncUI();
     saveState();
-    say(pick('sleepOff'), 5000);
+    say(pick('sleepOff'), 5200);
   }
 
   function handleToggleSleep() {
+    lastInteractionAt = Date.now();
     if (state.sleeping) {
       wakeUpFromSleep(false);
       return;
@@ -746,7 +933,7 @@
     state.sleeping = true;
     state.night = true;
     state.lampOn = true;
-    state.sitting = true;
+    state.sitting = false; // خوابیدن حالت مستقل درازکش است، نه نشستن!
     state.sleepStartedAt = Date.now();
     state.sleepEnergyStart = state.energy;
     sfx.sleep();
@@ -755,24 +942,26 @@
     spawnZzz();
     syncUI();
     saveState();
-    say(pick('sleepOn'), 5000);
+    say(pick('sleepOn'), 5200);
   }
 
-  // پنجره: تغییر روز و شب (منطق درست و مستقل از آباژور!)
+  $('hs-rug').addEventListener('click', handleToggleSit);
+  $('act-sit').addEventListener('click', handleToggleSit);
+  $('act-sleep').addEventListener('click', handleToggleSleep);
+
+  // ---------------- اشیای اتاق اختصاصی آستولفو ----------------
   $('hs-window').addEventListener('click', () => {
-    if (state.sleeping) {
-      wakeUpFromSleep(false);
-      return;
-    }
+    lastInteractionAt = Date.now();
+    if (state.sleeping) { wakeUpFromSleep(false); return; }
     state.night = !state.night;
     sfx.pop();
     syncUI();
     saveState();
-    say(pick(state.night ? 'windowNight' : 'windowDay'), 4500);
+    say(pick(state.night ? 'windowNight' : 'windowDay'), 4800);
   });
 
-  // آباژور: در شب نور گرم آباژور را روشن/خاموش می‌کند؛ در روز توضیح بامزه می‌دهد
   $('hs-lamp').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     sfx.pop();
     if (!state.night && !state.sleeping) {
       say('الان که روزه آفتاب تا وسط اتاق اومده! بزن روی پنجره تا شب بشه و آباژور رو روشن کنیم ☀️✨');
@@ -784,62 +973,60 @@
     say(state.lampOn ? DIALOGUES.lampToggle[0] : DIALOGUES.lampToggle[1]);
   });
 
-  // صندوقچه‌ی ماجراجویی (هر ۳ دقیقه یه غافلگیری سکه!)
   $('hs-trunk').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     const now = Date.now();
-    const cooldownMs = 180000;
-    if (now - (state.lastTrunkAt || 0) >= cooldownMs) {
+    if (now - (state.lastTrunkAt || 0) >= 180000) {
       state.lastTrunkAt = now;
       const bonus = 8 + Math.floor(Math.random() * 10);
       sfx.horn();
-      spawnParticles('🪙', 15, 72, 5);
+      spawnParticles('🪙', 14, 65, 5);
       adjustStats({ coins: bonus, love: 3, xp: 12 });
-      say(`یاهو! ته صندوقچه ${bonus} تا سکه‌ی یادگاری پیدا کردم! غافلگیری شد، نه؟ 🎁🪙`, 5000);
+      say(`یاهو! ته صندوقچه ${bonus} تا سکه‌ی یادگاری پیدا کردم! غافلگیری شد نیا~ 🎁🪙`, 5200);
     } else {
       sfx.pop();
-      spawnParticles('🎀', 15, 72, 3);
+      spawnParticles('🎀', 14, 65, 3);
       say(pick('trunk'));
     }
   });
 
-  $('hs-head').addEventListener('click', handlePetHead);
-  $('act-pet').addEventListener('click', handlePetHead);
-  $('hs-rug').addEventListener('click', handleToggleSit);
-  $('act-sit').addEventListener('click', handleToggleSit);
-  $('act-sleep').addEventListener('click', handleToggleSleep);
-
   $('hs-shelf').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     if (hasEquipped('horn')) sfx.horn(); else sfx.pop();
-    spawnParticles('✨', 18, 46, 4);
+    spawnParticles('✨', 20, 47, 4);
     say(pick('shelf'), 5400);
   });
 
   $('hs-clock').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     sfx.pop();
     say(pick('clock'));
   });
 
   $('hs-poster').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     sfx.pop();
-    spawnParticles('⭐', 82, 35, 4);
+    spawnParticles('⭐', 86, 29, 4);
     say(pick('poster'));
   });
 
   $('hs-plush').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     sfx.pet();
-    spawnParticles('🪽', 82, 74, 3);
+    spawnParticles('🪽', 80, 70, 3);
     say(pick('plush'));
   });
 
   $('hs-bowl').addEventListener('click', () => {
+    lastInteractionAt = Date.now();
     if (state.hunger >= 98) {
       sfx.pop();
-      say('الان کاملاً سیرم مستر! یه کم دیگه که ماجراجویی کنیم دوباره گرسنه‌م می‌شه 🍓');
+      say('الان حسابی سیرم رفیق! بذار بقیش بمونه برای هیپوگریف کوچولو 🍓🪽');
       return;
     }
     sfx.coin();
-    spawnParticles('🍓', 72, 79, 4);
-    if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1200);
+    spawnParticles('🍓', 65, 73, 4);
+    if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1250);
     adjustStats({ hunger: 14, love: 4, xp: 6 });
     say(pick('bowl'));
   });
@@ -852,7 +1039,7 @@
     syncUI();
   });
 
-  // ---------------- مدیریت مودال‌ها ----------------
+  // ---------------- مودال‌ها ----------------
   const overlay = $('modal-overlay');
   const modals = {
     shop: $('modal-shop'),
@@ -862,6 +1049,7 @@
   };
 
   function openModal(name) {
+    lastInteractionAt = Date.now();
     sfx.pop();
     overlay.classList.remove('hidden');
     Object.entries(modals).forEach(([k, el]) => el.classList.toggle('hidden', k !== name));
@@ -892,7 +1080,7 @@
   $('btn-open-rank').addEventListener('click', () => openModal('rank'));
   $('btn-open-chatlog').addEventListener('click', () => openModal('chat'));
 
-  // ---------------- فروشگاه (بدون innerHTML برای داده‌های کاربر + قابلیت نصب/برداشتن) ----------------
+  // ---------------- فروشگاه ----------------
   let shopCat = 'all';
   $('shop-tabs').addEventListener('click', (e) => {
     const btn = e.target.closest('.chip-tab');
@@ -914,17 +1102,9 @@
       const card = document.createElement('div');
       card.className = `shop-item${equipped ? ' equipped' : ''}`;
 
-      const ico = document.createElement('div');
-      ico.className = 'ico';
-      ico.textContent = item.ico;
-
-      const title = document.createElement('div');
-      title.className = 'title';
-      title.textContent = item.title;
-
-      const desc = document.createElement('div');
-      desc.className = 'desc';
-      desc.textContent = item.desc;
+      const ico = document.createElement('div'); ico.className = 'ico'; ico.textContent = item.ico;
+      const title = document.createElement('div'); title.className = 'title'; title.textContent = item.title;
+      const desc = document.createElement('div'); desc.className = 'desc'; desc.textContent = item.desc;
 
       const btn = document.createElement('button');
       btn.type = 'button';
@@ -934,11 +1114,9 @@
         btn.textContent = equipped ? 'نصب‌شده (برداشتن)' : 'نصب کن ✓';
         btn.addEventListener('click', () => {
           sfx.pop();
-          if (equipped) {
-            state.equipped = state.equipped.filter((x) => x !== item.id);
-          } else {
-            state.equipped.push(item.id);
-          }
+          state.equipped = equipped
+            ? state.equipped.filter((x) => x !== item.id)
+            : [...state.equipped, item.id];
           saveState();
           syncUI();
           renderShop();
@@ -956,8 +1134,8 @@
           adjustStats({ ...item.effect, coins: -item.price });
           renderShop();
           spawnParticles(item.ico, 50, 44, 5);
-          if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1400);
-          say(`یاهو! ${item.title} فوق‌العاده‌ست مستر! دستت درد نکنه 💖`, 4800);
+          if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1450);
+          say(`یاهو! ${item.title} معرکه‌ست! مرسی رفیق، کلی ذوق کردم 💖🎀`, 5000);
         });
       }
 
@@ -966,7 +1144,7 @@
     });
   }
 
-  // ---------------- مینی‌گیم ستاره‌چین (۱۰۰٪ گرافیک وکتور پاستلی اختصاصی، بدون ایموجی سیستمی) ----------------
+  // ---------------- مینی‌گیم پرواز ستاره‌چین (۱۰۰٪ وکتور پاستلی، بدون ایموجی سیستمی) ----------------
   const gCanvas = $('game-canvas');
   const gCtx = gCanvas.getContext('2d');
   let gRunning = false, gRaf = null, gClock = null;
@@ -974,9 +1152,7 @@
   let gDrops = [], gBursts = [];
 
   function drawStar(ctx, x, y, r, rot) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(rot);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
     ctx.beginPath();
     for (let i = 0; i < 10; i++) {
       const rad = i % 2 === 0 ? r : r * 0.46;
@@ -985,97 +1161,66 @@
       else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
     }
     ctx.closePath();
-    ctx.fillStyle = '#fde047';
-    ctx.strokeStyle = '#ca8a04';
-    ctx.lineWidth = 2;
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
+    ctx.fillStyle = '#fde047'; ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 2;
+    ctx.fill(); ctx.stroke(); ctx.restore();
   }
 
   function drawHeart(ctx, x, y, s) {
-    ctx.save();
-    ctx.translate(x, y);
+    ctx.save(); ctx.translate(x, y);
     ctx.beginPath();
     ctx.moveTo(0, s * 0.65);
     ctx.bezierCurveTo(-s * 1.15, -s * 0.1, -s * 0.75, -s * 0.95, 0, -s * 0.3);
     ctx.bezierCurveTo(s * 0.75, -s * 0.95, s * 1.15, -s * 0.1, 0, s * 0.65);
     ctx.closePath();
-    ctx.fillStyle = '#f472b6';
-    ctx.strokeStyle = '#be185d';
-    ctx.lineWidth = 2;
-    ctx.fill();
-    ctx.stroke();
-    ctx.restore();
+    ctx.fillStyle = '#f472b6'; ctx.strokeStyle = '#be185d'; ctx.lineWidth = 2;
+    ctx.fill(); ctx.stroke(); ctx.restore();
   }
 
   function drawBerry(ctx, x, y, r) {
-    ctx.save();
-    ctx.translate(x, y);
+    ctx.save(); ctx.translate(x, y);
     ctx.beginPath();
     ctx.moveTo(0, r * 1.05);
     ctx.quadraticCurveTo(-r * 0.95, r * 0.2, -r * 0.75, -r * 0.45);
     ctx.quadraticCurveTo(0, -r * 0.85, r * 0.75, -r * 0.45);
     ctx.quadraticCurveTo(r * 0.95, r * 0.2, 0, r * 1.05);
-    ctx.fillStyle = '#fb7185';
-    ctx.strokeStyle = '#be123c';
-    ctx.lineWidth = 1.8;
-    ctx.fill();
-    ctx.stroke();
-    // برگ سبز بالا
+    ctx.fillStyle = '#fb7185'; ctx.strokeStyle = '#be123c'; ctx.lineWidth = 1.8;
+    ctx.fill(); ctx.stroke();
     ctx.fillStyle = '#4ade80';
-    ctx.beginPath();
-    ctx.ellipse(0, -r * 0.55, r * 0.48, r * 0.22, 0, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.ellipse(0, -r * 0.55, r * 0.48, r * 0.22, 0, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
   function drawStormCloud(ctx, x, y, r) {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.fillStyle = '#7c3aed';
-    ctx.strokeStyle = '#4c1d95';
-    ctx.lineWidth = 2;
+    ctx.save(); ctx.translate(x, y);
+    ctx.fillStyle = '#7c3aed'; ctx.strokeStyle = '#4c1d95'; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.arc(-r * 0.55, 2, r * 0.52, 0, Math.PI * 2);
     ctx.arc(0, -r * 0.28, r * 0.66, 0, Math.PI * 2);
     ctx.arc(r * 0.58, 2, r * 0.50, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    // ابروی اخمو
-    ctx.strokeStyle = '#fef08a';
-    ctx.lineWidth = 2;
+    ctx.fill(); ctx.stroke();
+    ctx.strokeStyle = '#fef08a'; ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(-8, -2); ctx.lineTo(-2, 2);
     ctx.moveTo(8, -2);  ctx.lineTo(2, 2);
-    ctx.stroke();
-    ctx.restore();
+    ctx.stroke(); ctx.restore();
   }
 
-  function drawBasket(ctx, x, y) {
-    ctx.save();
-    ctx.translate(x, y);
-    // بدنه‌ی سبد پاستلی آستولفو
-    ctx.fillStyle = '#f472b6';
-    ctx.strokeStyle = '#9d174d';
-    ctx.lineWidth = 2.5;
+  function drawAstolfoBasket(ctx, x, y) {
+    ctx.save(); ctx.translate(x, y);
+    // بدنه‌ی سبد صورتی
+    ctx.fillStyle = '#f472b6'; ctx.strokeStyle = '#9d174d'; ctx.lineWidth = 2.4;
     ctx.beginPath();
-    ctx.moveTo(-42, -10);
-    ctx.lineTo(42, -10);
-    ctx.lineTo(34, 14);
-    ctx.lineTo(-34, 14);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-    // لبه‌ی سفید با خط شطرنجی ریز
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(-44, -14, 88, 7);
-    ctx.strokeRect(-44, -14, 88, 7);
-    // پاپیون کوچک وسط سبد
-    ctx.fillStyle = '#fde047';
-    ctx.beginPath();
-    ctx.arc(0, 3, 5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.moveTo(-42, -9); ctx.lineTo(42, -9); ctx.lineTo(34, 15); ctx.lineTo(-34, 15);
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+    // لبه‌ی شطرنجی سیاه‌وسفیدِ الهام‌گرفته از آستین هودی آستولفو
+    for (let i = 0; i < 11; i++) {
+      ctx.fillStyle = i % 2 === 0 ? '#2b1a28' : '#ffffff';
+      ctx.fillRect(-44 + i * 8, -15, 8, 7);
+    }
+    ctx.strokeStyle = '#382235'; ctx.lineWidth = 1.6;
+    ctx.strokeRect(-44, -15, 88, 7);
+    // ستاره‌ی طلایی وسط سبد
+    drawStar(ctx, 0, 3, 6.5, 0);
     ctx.restore();
   }
 
@@ -1095,17 +1240,12 @@
   function startGame() {
     if (state.energy < 10) {
       sfx.bad();
-      $('game-status').textContent = 'انرژی آستولفو زیر ۱۰ شده! اول یه خوراکی بده یا بذار چند ثانیه روی فرش چرت بزنه 🌙🍓';
+      $('game-status').textContent = 'نیا~ انرژی‌م زیر ۱۰ شده! اول یه خوراکی برسون یا بذار چند ثانیه روی فرش دراز بکشم 🌙🍓';
       return;
     }
     stopGame();
-    gRunning = true;
-    gScore = 0;
-    gCombo = 0;
-    gTime = 30;
-    gDrops = [];
-    gBursts = [];
-    gBasketX = gCanvas.width / 2;
+    gRunning = true; gScore = 0; gCombo = 0; gTime = 30;
+    gDrops = []; gBursts = []; gBasketX = gCanvas.width / 2;
     $('game-score').textContent = '0';
     $('game-combo').textContent = '×1';
     $('game-timer').textContent = '30';
@@ -1116,7 +1256,6 @@
       $('game-timer').textContent = gTime;
       if (gTime <= 0) finishGame();
     }, 1000);
-
     loopGame();
   }
 
@@ -1127,18 +1266,17 @@
     if (gScore > state.bestScore) state.bestScore = gScore;
     adjustStats({ coins: reward, xp: Math.min(90, gScore * 2), energy: -10, hunger: -5, love: 6 });
     $('game-best').textContent = state.bestScore;
-    $('game-status').textContent = `ایول مستر! امتیازت ${gScore} شد و ${reward} سکه 🪙 برنده شدی!${hasEquipped('horn') ? ' (با پاداش +۳۰٪ شاخ طلایی!)' : ''}`;
+    $('game-status').textContent = `یاهو! امتیازت ${gScore} شد و ${reward} سکه 🪙 بردیم!${hasEquipped('horn') ? ' (با پاداش +۳۰٪ لا بلک لونا!)' : ''}`;
     $('game-overlay').classList.remove('hidden');
     sfx.horn();
-    say(`یاهو! توی ستاره‌چین ${gScore} امتیاز گرفتی و ${reward} سکه به جیب زدیم ⭐🪙`, 5200);
+    say(`یاهو! توی پرواز ستاره‌چین ${gScore} امتیاز گرفتی و ${reward} سکه بردیم ⭐🪙`, 5200);
   }
 
   function loopGame() {
     if (!gRunning) return;
     gCtx.clearRect(0, 0, gCanvas.width, gCanvas.height);
 
-    // ستاره‌های ریز پس‌زمینه
-    gCtx.fillStyle = 'rgba(255,255,255,0.55)';
+    gCtx.fillStyle = 'rgba(255,255,255,0.6)';
     for (let s = 0; s < 14; s++) {
       gCtx.beginPath();
       gCtx.arc((s * 67) % gCanvas.width, (s * 43) % 240, 2, 0, Math.PI * 2);
@@ -1148,41 +1286,29 @@
     if (Math.random() < 0.062) {
       const r = Math.random();
       const kind = r < 0.48 ? 'star' : r < 0.68 ? 'heart' : r < 0.80 ? 'berry' : 'cloud';
-      gDrops.push({
-        x: 26 + Math.random() * (gCanvas.width - 52),
-        y: -22,
-        vy: 2.5 + Math.random() * 2.2,
-        rot: Math.random() * Math.PI,
-        kind,
-      });
+      gDrops.push({ x: 26 + Math.random() * (gCanvas.width - 52), y: -22, vy: 2.5 + Math.random() * 2.2, rot: Math.random() * Math.PI, kind });
     }
 
-    drawBasket(gCtx, gBasketX, gCanvas.height - 28);
+    drawAstolfoBasket(gCtx, gBasketX, gCanvas.height - 28);
 
     for (let i = gDrops.length - 1; i >= 0; i--) {
       const d = gDrops[i];
-      d.y += d.vy;
-      d.rot += 0.04;
-
-      if (d.kind === 'star')       drawStar(gCtx, d.x, d.y, 13, d.rot);
+      d.y += d.vy; d.rot += 0.04;
+      if (d.kind === 'star') drawStar(gCtx, d.x, d.y, 13, d.rot);
       else if (d.kind === 'heart') drawHeart(gCtx, d.x, d.y, 12);
       else if (d.kind === 'berry') drawBerry(gCtx, d.x, d.y, 12);
-      else                         drawStormCloud(gCtx, d.x, d.y, 14);
+      else drawStormCloud(gCtx, d.x, d.y, 14);
 
       const hit = d.y >= gCanvas.height - 46 && d.y <= gCanvas.height - 10 && Math.abs(d.x - gBasketX) < 48;
       if (hit) {
         if (d.kind === 'cloud') {
-          gCombo = 0;
-          gScore = Math.max(0, gScore - 6);
-          addGameBurst(d.x, d.y, '#7c3aed');
-          sfx.bad();
+          gCombo = 0; gScore = Math.max(0, gScore - 6);
+          addGameBurst(d.x, d.y, '#7c3aed'); sfx.bad();
         } else {
           gCombo += 1;
           const mult = gCombo >= 10 ? 3 : gCombo >= 5 ? 2 : 1;
-          const pts = (d.kind === 'heart' ? 10 : d.kind === 'berry' ? 8 : 5) * mult;
-          gScore += pts;
-          addGameBurst(d.x, d.y, d.kind === 'star' ? '#fde047' : '#f472b6');
-          sfx.coin();
+          gScore += (d.kind === 'heart' ? 10 : d.kind === 'berry' ? 8 : 5) * mult;
+          addGameBurst(d.x, d.y, d.kind === 'star' ? '#fde047' : '#f472b6'); sfx.coin();
         }
         $('game-score').textContent = gScore;
         $('game-combo').textContent = `×${gCombo >= 10 ? 3 : gCombo >= 5 ? 2 : 1}`;
@@ -1196,27 +1322,23 @@
       const b = gBursts[i];
       b.x += b.vx; b.y += b.vy; b.life -= 0.05;
       if (b.life <= 0) { gBursts.splice(i, 1); continue; }
-      gCtx.globalAlpha = b.life;
-      gCtx.fillStyle = b.color;
-      gCtx.beginPath();
-      gCtx.arc(b.x, b.y, 3.5, 0, Math.PI * 2);
-      gCtx.fill();
+      gCtx.globalAlpha = b.life; gCtx.fillStyle = b.color;
+      gCtx.beginPath(); gCtx.arc(b.x, b.y, 3.5, 0, Math.PI * 2); gCtx.fill();
       gCtx.globalAlpha = 1;
     }
-
     gRaf = requestAnimationFrame(loopGame);
   }
 
   function moveBasket(clientX) {
     const rect = gCanvas.getBoundingClientRect();
-    gBasketX = clamp((clientX - rect.left) * (gCanvas.width / rect.width), 46, gCanvas.width - 46);
+    gBasketX = clampFloat((clientX - rect.left) * (gCanvas.width / rect.width), 46, gCanvas.width - 46);
   }
 
   gCanvas.addEventListener('pointermove', (e) => { if (gRunning) moveBasket(e.clientX); });
   gCanvas.addEventListener('pointerdown', (e) => { if (gRunning) moveBasket(e.clientX); });
   $('btn-game-start').addEventListener('click', startGame);
 
-  // ---------------- لیدربورد همراهان Fate/Apocrypha (۱۰۰٪ ایمن بدون innerHTML) ----------------
+  // ---------------- لیدربورد همراهان Fate/Apocrypha (ایمن + هوک آماده برای بک‌اند زنده) ----------------
   const RIVALS = [
     { name: 'ژان دارک ⚜️', score: 210, level: 6 },
     { name: 'رولان ⚔️',    score: 165, level: 5 },
@@ -1225,13 +1347,27 @@
     { name: 'فران 🌸',     score: 60,  level: 2 },
   ];
 
-  function renderRank() {
+  async function renderRank() {
     $('player-name-input').value = state.playerName;
     const myLevel = Math.floor(state.xp / 100) + 1;
-    const rows = [
-      ...RIVALS,
-      { name: state.playerName || 'مستر', score: state.bestScore, level: myLevel, isMe: true },
-    ].sort((a, b) => b.score - a.score);
+    let rows = null;
+
+    if (typeof window.TWINKY_LEADERBOARD_API === 'string' && window.TWINKY_LEADERBOARD_API.startsWith('http')) {
+      try {
+        const res = await fetch(window.TWINKY_LEADERBOARD_API);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.rows)) rows = data.rows;
+        }
+      } catch {}
+    }
+
+    if (!rows) {
+      rows = [
+        ...RIVALS,
+        { name: state.playerName || 'رفیق', score: state.bestScore, level: myLevel, isMe: true },
+      ].sort((a, b) => b.score - a.score);
+    }
 
     const list = $('rank-list');
     list.textContent = '';
@@ -1242,14 +1378,14 @@
       el.className = `rank-row${row.isMe ? ' is-me' : ''}`;
 
       const left = document.createElement('span');
-      const nameNode = document.createTextNode(`${medal} ${row.name} `);
+      left.append(document.createTextNode(`${medal} ${String(row.name || '')} `));
       const lvl = document.createElement('small');
       lvl.style.opacity = '0.68';
-      lvl.textContent = `(سطح ${row.level})`;
-      left.append(nameNode, lvl);
+      lvl.textContent = `(سطح ${Number(row.level) || 1})`;
+      left.append(lvl);
 
       const right = document.createElement('strong');
-      right.textContent = `${row.score} امتیاز`;
+      right.textContent = `${Number(row.score) || 0} امتیاز`;
 
       el.append(left, right);
       list.appendChild(el);
@@ -1265,9 +1401,8 @@
     renderRank();
   });
 
-  // ---------------- چت آگاه از وضعیت با لحن آستولفو + هوک اختیاری API زنده ----------------
+  // ---------------- چت با لحن اصیل آستولفو + هوک آماده برای اندپوینت زنده ----------------
   async function generateAstolfoReply(msg) {
-    // اگر Worker هوش مصنوعی خودت (مثل FelixAgent) را در window.TWINKY_CHAT_API تنظیم کنی، مستقیم از آن می‌پرسد!
     if (typeof window.TWINKY_CHAT_API === 'string' && window.TWINKY_CHAT_API.startsWith('http')) {
       try {
         const res = await fetch(window.TWINKY_CHAT_API, {
@@ -1275,7 +1410,15 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: msg,
-            state: { love: state.love, hunger: state.hunger, energy: state.energy, sitting: state.sitting, night: state.night, name: state.playerName },
+            state: {
+              love: Math.round(state.love),
+              hunger: Math.round(state.hunger),
+              energy: Math.round(state.energy),
+              sitting: state.sitting,
+              sleeping: state.sleeping,
+              night: state.night,
+              name: state.playerName,
+            },
           }),
         });
         if (res.ok) {
@@ -1286,62 +1429,65 @@
     }
 
     const t = msg.trim();
-    const who = state.playerName || 'مستر';
+    const who = state.playerName || 'رفیق';
 
-    if (/سلام|درود|یاهو|هی|صبح|شب بخیر/.test(t)) {
-      if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1300);
+    if (/سلام|درود|یاهو|نیا|هی|صبح|شب بخیر/.test(t)) {
+      if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1350);
       return state.night
-        ? `یاهو ${who}! شب شده و اتاق حسابی دنج شده 🌙 چی تو سرمونه؟`
-        : `یاهو ${who}! بالاخره اومدی 🎀 امروز پایه‌ی یه ماجراجویی یا یه دست ستاره‌چین هستی؟`;
+        ? `یاهو ${who}! شب شده و ماه طلایی از پنجره افتاده تو اتاق 🌙 بگو چه نقشه‌ای داریم؟`
+        : `یاهو ${who}! نیا~ بالاخره پیدات شد 🎀 بی‌خیال قوانین خشک، امروز چه کار باحالی کنیم؟`;
     }
     if (/چطوری|حالت|خوبی|چه خبر/.test(t)) {
-      if (state.hunger < 35) return `راستش ${who}، شکمم داره قاروقور می‌کنه (سیری ${state.hunger}٪)! یه کرپ یا توت‌فرنگی بدی دوباره سرحال می‌شم 🍓`;
-      if (state.energy < 30) return `انرژی‌م رسیده به ${state.energy}٪... یه چرت کوچولو روی فرش بزنم دوباره می‌پرم بالا 🌙`;
-      return `عالیِ عالی‌ام ${who}! صمیمیتمون ${state.love}٪ شده و حالم از هر وقت دیگه بهتره ✨`;
+      if (state.hunger < 35) return `راستش ${who}، شکمم داره صدای شاخ لا بلک لونا درمیاره (${Math.round(state.hunger)}٪)! یه کرپ یا توت‌فرنگی بدی دوباره سرحال می‌شم 🍓`;
+      if (state.energy < 30) return `انرژی‌م رسیده به ${Math.round(state.energy)}٪... یه کم روی فرش دراز بکشم دوباره می‌پرم هوا 🌙`;
+      return `عالیِ عالی‌ام ${who}! رفاقتمون شده ${Math.round(state.love)}٪ و پُرم از حس ماجراجویی نیا~ ✨`;
     }
     if (/هیپوگریف|پرواز|اسب|بال/.test(t)) {
       spawnParticles('🪽', 50, 40, 4);
-      return 'هیپوگریف بهترین هم‌سفر دنیاست! نصفش عقابه نصفش اسب، از قفس متنفره و توی آسمون هیچ‌کی حریفش نمی‌شه 🪽⭐';
+      return 'هیپوگریف بهترین هم‌سفر دنیاست! نصفش عقابه نصفش اسب، از قفس متنفره و توی آسمون هیچ‌کی به گردش نمی‌رسه 🪽⭐';
+    }
+    if (/کتاب|طلسم|لوگستیلا|قفسه|شاخ|لا بلک/.test(t)) {
+      return 'اوه! اون کتاب بنفشِ روبان‌دار اسمش... اممم... کاسا دی لوگستیلا بود! آره! همه‌ی طلسم‌ها رو باطل می‌کنه، و کنارش هم شاخ طلاییِ لا بلک لوناست 🎺📚 هی‌هی~';
     }
     if (/غافلگیری|سورپرایز|صندوق|گنج/.test(t)) {
-      return 'اوه عاشق غافلگیری‌ام! 🎁 یه سر به صندوقچه‌ی پایین سمت چپ اتاق بزن — گاهی سکه‌های یادگاری قایم‌شده توش پیدا می‌شه!';
+      return 'عاشق غافلگیری‌ام نیا~ 🎁 یه سر به صندوقچه‌ی پایین سمت چپ بزن، یا دست و لپمو لمس کن ببین چه واکنشی نشون می‌دم ✨';
     }
-    if (/شاخ|لا بلک|طلسم|کتاب|قفسه/.test(t)) {
-      return 'شاخ طلاییِ لا بلک لونا و کتاب طلسمم روی قفسه‌ست! البته اسم نصف طلسم‌هاشو یادم می‌ره ولی هیجانش به همینه 🎺📚';
+    if (/زیگ|رولان|موردرد|ژان|پالادین|شارلمانی|فیت/.test(t)) {
+      return 'رفیق‌های قدیمیم رو می‌شناسی؟ زیگ خیلی خوش‌قلبه، رولان همیشه شلوغ‌کاری می‌کنه و موردرد هم زیادی جدیه! ولی بین خودمون باشه، گپ زدن با تو از همه باحال‌تره 🎀⚔️';
     }
     if (/دوستت|عشق|قشنگ|ناز|کیوت|زیبا|بهترین/.test(t)) {
-      if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1500);
+      if (!state.sleeping) setTempPose(state.sitting ? 'sitHappy' : 'happy', 1550);
       spawnParticles('💖', 50, 36, 5);
       adjustStats({ love: 5, xp: 6 });
-      return `اوووه ${who} خجالتم دادی! 💖 هر جا بری و هر ماجراجویی‌ای باشه، من تا آخرش پشتتم!`;
+      return `نیا~ خجالتم دادی ${who}! 💖 هر جا بری و هر ماجرایی پیش بیاد، رایدرِ سیاه تا آخرش کنارت می‌مونه!`;
     }
     if (/بشین|چهارزانو|فرش/.test(t)) {
       if (!state.sitting && !state.sleeping) handleToggleSit();
-      return 'چشم! چهارزانو روی فرش نشستم 🎀 حالا تعریف کن!';
+      return 'چشم! چهارزانو روی فرش نشستم 🎀 حالا تعریف کن چه خبر!';
     }
     if (/پاشو|بلند شو/.test(t)) {
       if (state.sitting || state.sleeping) handleToggleSit();
-      return 'پریدم بالا! آماده‌ی ماجراجویی‌ام ⚡';
+      return 'یاهو! پریدم بالا، آماده‌ی ماجراجویی‌ام ⚡';
     }
-    if (/خواب|چرت|بخواب/.test(t)) {
+    if (/خواب|چرت|بخواب|دراز/.test(t)) {
       if (!state.sleeping) handleToggleSleep();
-      return 'باشه، همینجا روی فرش یه چرت آروم می‌زنم 🌙💤';
+      return 'باشه، همینجا روی فرش دراز می‌کشم یه چرت حسابی بزنم 🌙💤';
     }
     if (/غذا|گرسنه|کرپ|کباب|توت|شیرتوت/.test(t)) {
-      return 'اسمشو آوردی آب دهنم راه افتاد! 🍰 بزن روی کاسه‌ی غذا یا فروشگاه تا یه ضیافت راه بندازیم!';
+      return 'اسمشو آوردی آب دهنم راه افتاد نیا~ 🍰 بزن روی گنجینه یا کاسه‌ی ستاره‌ای تا یه ضیافت راه بندازیم!';
     }
-    if (/بازی|ستاره|رکورد|رولان|موردرد/.test(t)) {
-      return `پایه‌ام! رکورد فعلیت ${state.bestScore} امتیازه — بیا ببینیم می‌تونیم توی ستاره‌چین از رولان و موردرد جلو بزنیم یا نه ⭐`;
+    if (/بازی|ستاره|رکورد/.test(t)) {
+      return `پایه‌ام! رکوردت الان ${state.bestScore} امتیازه — بزن بریم توی «پرواز ستاره» از رولان و موردرد جلو بزنیم ⭐🪽`;
     }
     if (/قانون|رسمی|قفس/.test(t)) {
-      return 'اَه نه! از قوانین خشک و قفس متنفرم! آدم باید آزاد باشه و دنبال حس خوب و ماجراجویی بره 🎀✨';
+      return 'اَه نه! از قوانین خشک و قفس متنفرم! آدم باید آزادِ آزاد باشه و دنبال غافلگیری و خوش‌گذرونی بره 🎀✨';
     }
 
     if (!state.sitting && !state.sleeping) setTempPose('tilt', 1600);
     const dynamic = [
-      `جالبه ${who}! اینکه گفتی «${t}» یه ایده‌ی بامزه تو سرم انداخت ✨ بیشتر بگو!`,
-      `هی‌هی، با تو گپ زدن توی این اتاق از همه‌ی تشریفات قصر بهتره 🎀 راستی حواست به سکه‌هات (${state.coins} 🪙) هست؟`,
-      `سرمو کج کردم کامل گوش بدم ${who}! هر چی بگی من پایه‌ام 💖`,
+      `جالبه ${who}! اینکه گفتی «${t}» یه ایده‌ی شیطنت‌آمیز تو سرم انداخت نیا~ ✨ بیشتر بگو!`,
+      `هی‌هی، حرف زدن با تو از همه‌ی تشریفات قصر بهتره 🎀 راستی حواست به سکه‌هات (${state.coins} 🪙) هست؟`,
+      `سرمو کج کردم کامل گوش بدم ${who}! هر ماجرایی بگی من پایه‌ام 💖`,
     ];
     return dynamic[Math.floor(Math.random() * dynamic.length)];
   }
@@ -1361,6 +1507,7 @@
   async function submitChatMessage(rawText) {
     const text = rawText.trim();
     if (!text) return;
+    lastInteractionAt = Date.now();
     sfx.pop();
     state.chatLog.push({ from: 'user', text });
     if (state.chatLog.length > 70) state.chatLog = state.chatLog.slice(-70);
